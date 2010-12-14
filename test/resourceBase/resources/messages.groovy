@@ -1,0 +1,17 @@
+test {
+    key1 = 'resources/messages.groovy'
+    key2 = 'resources/messages.groovy'
+    key3 = 'resources/messages.groovy'
+    key4 = 'resources/messages.groovy'
+    key5 = 'resources/messages.groovy'
+    key6 = 'resources/messages.groovy'
+    key7 = 'resources/messages.groovy'
+    key8 = 'resources/messages.groovy'
+    key9 = 'resources/messages.groovy'
+    key10 = 'resources/messages.groovy'
+    key11 = 'resources/messages.groovy'
+    key12 = 'resources/messages.groovy'
+    key13 = 'resources/messages.groovy'
+    key14 = 'resources/messages.groovy'
+    key15 = 'resources/messages.groovy'
+}
