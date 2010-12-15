@@ -59,7 +59,6 @@ class ResourceManager implements Cloneable {
         basenames.addPropertyChangeListener(configChanged)
         basedirs.addPropertyChangeListener(configChanged)
         binding.addPropertyChangeListener(configChanged)
-        binding.resources = new ResourceBuilder()
     }
 
     @Override

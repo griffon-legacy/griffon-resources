@@ -1,5 +1,7 @@
 import griffon.resourcemanager.ResourceManager
 import griffon.core.GriffonApplication
+import griffon.resourcemanager.URIFactory
+import griffon.resourcemanager.URLFactory
 
 class ResourcesGriffonAddon {
     private final ResourceManager resourceManager = new ResourceManager()
@@ -63,9 +65,10 @@ class ResourcesGriffonAddon {
     //]
 
     // adds new factories to all builders
-    //def factories = [
-    //    factory : /*instance that extends Factory*/
-    //]
+    def factories = [
+        url: new URLFactory(),
+        uri: new URIFactory(),
+    ]
 
     // adds application event handlers
     def events = [
