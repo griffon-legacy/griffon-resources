@@ -1,7 +1,5 @@
-import griffon.resourcemanager.ResourceManager
 import griffon.core.GriffonApplication
-import griffon.resourcemanager.URIFactory
-import griffon.resourcemanager.URLFactory
+import griffon.resourcemanager.*
 
 class ResourcesGriffonAddon {
     private final ResourceManager resourceManager = new ResourceManager()
@@ -33,6 +31,7 @@ class ResourcesGriffonAddon {
     //}
 
     // called many times, after creating a builder
+
     def addonBuilderInit(app, builder) {
         this.app = app
         this.builder = builder
@@ -66,8 +65,13 @@ class ResourcesGriffonAddon {
 
     // adds new factories to all builders
     def factories = [
-        url: new URLFactory(),
-        uri: new URIFactory(),
+            url: new URLFactory(),
+            uri: new URIFactory(),
+            dimension: new DimensionFactory(),
+            insets: new InsetsFactory(),
+            point: new PointFactory(),
+            locale: new LocaleFactory(),
+            rectangle: new RectangleFactory()
     ]
 
     // adds application event handlers

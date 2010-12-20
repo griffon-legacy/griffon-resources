@@ -4,6 +4,7 @@ import java.awt.Dimension
 import java.awt.Insets
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.Color
 
 /*
  * Copyright 2010 the original author or authors.
@@ -188,5 +189,26 @@ class LocaleFactory extends AbstractFactory {
     boolean isLeaf() { true }
 }
 
-// TODO: Color, Font, Image, Icon
+class ColorFactory extends AbstractFactory {
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attr) {
+        int r, g, b, a = 255
+        try {
+            if (value instanceof String) {
+                if (!value)
+                    return Locale.default
+                return new Locale(* value.trim().split('_'))
+            } else if (attr.language) {
+                return new Color(attr.language, attr.country ?: "", attr.variant ?: "")
+            }
+        } catch (e) {
+            throw new RuntimeException("Invalid Color format")
+        }
+        throw new RuntimeException("Invalid Color format")
+        return new Color(r, g, b, a)
+    }
+
+    @Override
+    boolean isLeaf() { true }
+}
+// TODO:
 // Gfx: color, font, image, rgba
