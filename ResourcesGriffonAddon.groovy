@@ -80,9 +80,26 @@ class ResourcesGriffonAddon {
                 def rm = resourceManager[cls]
                 rm.binding.app = app
                 rm.binding.builder = builder
-                instance.metaClass.rsc = rm
+                try {
+                    instance.setRsc(rm)
+                } catch (MissingMethodException mme) {
+                    try {
+                        instance.rsc = rm
+                    } catch (MissingPropertyException mpe) {
+                        instance.metaClass.rsc = rm
+                    }
+                }
+                try {
+                    instance.setResourceManager(rm)
+                } catch (MissingMethodException mme) {
+                    try {
+                        instance.resourceManager = rm
+                    } catch (MissingPropertyException mpe) {
+                        instance.metaClass.resourceManager = rm
+                    }
+                }
             }
-            //    "StartupStart": {app -> /* event hadler code */ }
+            //    "StartupStart": {app -> /* event handler code */ }
     ]
 
     // handle synthetic node properties or
