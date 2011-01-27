@@ -43,7 +43,7 @@ class ResourceManager implements Cloneable {
     String extension = 'groovy'
     @Bindable
     Class baseclass
-    final ObservableMap binding = [:] as ObservableMap
+    ObservableMap binding = [:] as ObservableMap
 
     private ConfigSlurper slurper = new ConfigSlurper()
     private ConfigObject config
@@ -121,31 +121,41 @@ class ResourceManager implements Cloneable {
         if (!config) {
             ConfigObject temp
             def dirs = []
+            dirs.addAll(basedirs)
             if (baseclass)
                 dirs << "${baseclass.package.name}.resources"
-            dirs.addAll(basedirs)
             dirs.each { base ->
+                def pfx = ''
+                if(base == "${baseclass?.package?.name}.resources")
+                    pfx = baseclass.name
                 basenames.each {name ->
                     customSuffixes.each {suffix ->
                         getCandidateLocales().each { loc ->
-                            def config = getConfigObject("$base.$name$suffix$loc")
-                            if (config) {
-                                temp = merge(temp, config)
+                            def cfg = getConfigObject("$base.$name$suffix$loc", pfx)
+                            if (cfg) {
+                                temp = merge(temp, cfg)
                             }
                         }
                     }
                     getCandidateLocales().each { loc ->
-                        def config = getConfigObject("$base.$name$loc")
-                        if (config) {
-                            temp = merge(temp, config)
+                        def cfg = getConfigObject("$base.$name$loc", pfx)
+                        if (cfg) {
+                            temp = merge(temp, cfg)
                         }
                     }
                 }
             }
-            if (baseclass)
+            if (baseclass) {
+/*
+                ConfigObject cfg = getConfigObject("${baseclass.package.name}.resources.${baseclass.simpleName}", baseclass.name)
+                if(cfg) {
+                    temp = merge(cfg, temp)
+                }
+*/
                 engine = new GStringTemplateEngine(baseclass.classLoader)
-            else
+            } else {
                 engine = new GStringTemplateEngine()
+            }
             config = temp
         }
         return config
@@ -160,14 +170,25 @@ class ResourceManager implements Cloneable {
         return primary
     }
 
-    protected ConfigObject getConfigObject(String target) {
+    protected ConfigObject getConfigObject(String target, String prefix = null) {
+        // Load by class if it exists
         ConfigObject object
-        String bundleName = target.replaceAll(/\./, '/')
-        URL url = loader.getResource("${bundleName}.$extension")
-        slurper.binding = binding
-        if (url)
-            object = slurper.parse(url)
+        try {
+            Class cls = baseclass.classLoader.loadClass(target)
+            if (cls.isAssignableFrom(Script))
+                object = this.prefix(slurper.parse(cls), prefix)
+        } catch (ClassNotFoundException e) { }
 
+        String bundleName = target.replaceAll(/\./, '/')
+        URL url
+        // If not, load by .groovy
+        if (!object) {
+            url = loader.getResource("${bundleName}.$extension")
+            slurper.binding = binding
+            if (url)
+                object = this.prefix(slurper.parse(url), prefix)
+        }
+        // Load .properties
         url = loader.getResource("${bundleName}.properties")
         if (url) {
             Properties prop = new Properties()
@@ -177,9 +198,24 @@ class ResourceManager implements Cloneable {
                 is.close()
             }
             if (object)
-                object = slurper.parse(prop).merge(object)
+                object = this.prefix(slurper.parse(prop), prefix).merge(object)
             else
-                object = slurper.parse(prop)
+                object = this.prefix(slurper.parse(prop), prefix)
+        }
+    }
+
+    private ConfigObject prefix(ConfigObject cfg, String prefix) {
+        if (!prefix)
+            return cfg
+        else {
+            ConfigObject obj = cfg
+            prefix.split(/\./).reverseEach {
+                ConfigObject temp = new ConfigObject()
+                temp.it = obj
+                obj = temp
+            }
+            obj.configFile = cfg.configFile
+            return obj
         }
     }
 
