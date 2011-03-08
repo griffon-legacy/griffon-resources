@@ -40,14 +40,14 @@ class ResourceManagerTests extends GriffonUnitTestCase {
         def url = new File('test/resourceBase').toURL()
         rm.loader = new URLClassLoader([url] as URL[], resourcemanager.ResourceManagerTests.getClassLoader())
         rm = rm[this.getClass()]
-        assert rm.test.key1 == 'resourcemanager/resources/messages_custom_de.groovy'
-        assert rm.test.key2 == 'resourcemanager/resources/messages_custom_de.properties'
-        assert rm.test.key3 == 'resourcemanager/resources/messages_custom.groovy'
-        assert rm.test.key4 == 'resourcemanager/resources/messages_custom.properties'
-        assert rm.test.key5 == 'resourcemanager/resources/messages_de.groovy'
-        assert rm.test.key6 == 'resourcemanager/resources/messages_de.properties'
-        assert rm.test.key7 == 'resourcemanager/resources/messages.groovy'
-        assert rm.test.key8 == 'resourcemanager/resources/messages.properties'
+        assert rm.test.key1 == 'resourcemanager/resources/ResourceManagerTests_custom_de.groovy'
+        assert rm.test.key2 == 'resourcemanager/resources/ResourceManagerTests_custom_de.properties'
+        assert rm.test.key3 == 'resourcemanager/resources/ResourceManagerTests_custom.groovy'
+        assert rm.test.key4 == 'resourcemanager/resources/ResourceManagerTests_custom.properties'
+        assert rm.test.key5 == 'resourcemanager/resources/ResourceManagerTests_de.groovy'
+        assert rm.test.key6 == 'resourcemanager/resources/ResourceManagerTests_de.properties'
+        assert rm.test.key7 == 'resourcemanager/resources/ResourceManagerTests.groovy'
+        assert rm.test.key8 == 'resourcemanager/resources/ResourceManagerTests.properties'
         assert rm.test.key9 == 'resources/messages_custom_de.groovy'
         assert rm.test.key10 == 'resources/messages_custom_de.properties'
         assert rm.test.key11 == 'resources/messages_custom.groovy'
