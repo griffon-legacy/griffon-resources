@@ -1,4 +1,7 @@
 import griffon.core.GriffonApplication
+import org.springframework.beans.propertyeditors.LocaleEditor
+import org.springframework.beans.propertyeditors.URIEditor
+import org.springframework.beans.propertyeditors.URLEditor
 import griffon.resourcemanager.*
 
 class ResourcesGriffonAddon {
@@ -6,7 +9,6 @@ class ResourcesGriffonAddon {
     private static final String DEFAULT_I18N_FILE = 'messages'
 
     private GriffonApplication app
-    private def builder
 
     // lifecycle methods
 
@@ -17,13 +19,16 @@ class ResourcesGriffonAddon {
         if (!basenames.contains(DEFAULT_I18N_FILE))
             basenames = [DEFAULT_I18N_FILE] + basenames
         app.metaClass.resourceManager = resourceManager
-        app.metaClass.rsc = resourceManager
+        app.metaClass.rm = resourceManager
         resourceManager.basenames = basenames as ObservableList
         resourceManager.customSuffixes = (app.config?.resources?.customSuffixes ?: []) as ObservableList
         resourceManager.basedirs = (app.config?.resources?.basedirs ?: ['resources', 'i18n']) as ObservableList
         resourceManager.locale = app.config?.resources?.locale ?: Locale.default
         resourceManager.loader = app.config?.resources?.loader ?: ResourceManager.classLoader
         resourceManager.extension = app.config?.resources?.extension ?: 'groovy'
+        resourceManager.log = app.log
+        this.app = app
+        resourceManager.binding.app = app
     }
 
     // called once, after all addons have been inited
@@ -31,13 +36,8 @@ class ResourcesGriffonAddon {
     //}
 
     // called many times, after creating a builder
-
-    def addonBuilderInit(app, builder) {
-        this.app = app
-        this.builder = builder
-        resourceManager.binding.app = app
-        resourceManager.binding.builder = builder
-    }
+    //def addonBuilderInit(app, builder) {
+    //}
 
     // called many times, after creating a builder and after
     // all addons have been inited
@@ -45,7 +45,6 @@ class ResourcesGriffonAddon {
     //}
 
     // to add MVC Groups use create-mvc
-
     // builder fields, these are added to all builders.
     // closures can either be literal { it -> println it}
     // or they can be method closures: this.&method
@@ -64,29 +63,21 @@ class ResourcesGriffonAddon {
     //]
 
     // adds new factories to all builders
-    def factories = [
-            url: new URLFactory(),
-            uri: new URIFactory(),
-            dimension: new DimensionFactory(),
-            insets: new InsetsFactory(),
-            point: new PointFactory(),
-            locale: new LocaleFactory(),
-            rectangle: new RectangleFactory()
-    ]
+    //def factories = [
+    //]
 
     // adds application event handlers
     def events = [
             NewInstance: {Class cls, String type, Object instance ->
                 def rm = resourceManager[cls]
                 rm.binding.app = app
-                rm.binding.builder = builder
                 try {
-                    instance.setRsc(rm)
+                    instance.setRm(rm)
                 } catch (MissingMethodException mme) {
                     try {
-                        instance.rsc = rm
+                        instance.rm = rm
                     } catch (MissingPropertyException mpe) {
-                        instance.metaClass.rsc = rm
+                        instance.metaClass.rm = rm
                     }
                 }
                 try {

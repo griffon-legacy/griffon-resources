@@ -1,12 +1,16 @@
 package griffon.resourcemanager
 
+import griffon.resourcemanager.ToStringEditor
 import groovy.beans.Bindable
 import java.beans.PropertyChangeListener
+import java.beans.PropertyEditor
 import java.security.AccessController
 import java.security.PrivilegedActionException
 import java.security.PrivilegedExceptionAction
-import groovy.text.GStringTemplateEngine
-import groovy.swing.SwingBuilder
+import org.slf4j.LoggerFactory
+import org.springframework.beans.BeanWrapperImpl
+import org.codehaus.groovy.runtime.metaclass.ClosureMetaMethod
+import org.codehaus.griffon.runtime.builder.UberBuilder
 
 /*
  * Copyright 2010 the original author or authors.
@@ -29,260 +33,410 @@ import groovy.swing.SwingBuilder
  */
 
 class ResourceManager implements Cloneable {
-  @Bindable
-  ObservableList customSuffixes = [] as ObservableList
-  @Bindable
-  ObservableList basenames = [] as ObservableList
-  @Bindable
-  ObservableList basedirs = ['resources', 'i18n'] as ObservableList
-  @Bindable
-  Locale locale = Locale.default
-  @Bindable
-  ClassLoader loader = griffon.resourcemanager.ResourceManager.classLoader
-  @Bindable
-  String extension = 'groovy'
-  @Bindable
-  Class baseclass
-  ObservableMap binding = [:] as ObservableMap
+    static final Map<Class, Class> WRAPPERS = [:]
+    private static final BeanWrapperImpl registry = new BeanWrapperImpl(true)
 
-  private ConfigSlurper slurper = new ConfigSlurper()
-  private ConfigObject config
-  private GStringTemplateEngine engine
+    static {
+        registry.useConfigValueEditors()
+        WRAPPERS.put(byte.class, Byte.class);
+        WRAPPERS.put(short.class, Short.class);
+        WRAPPERS.put(char.class, Character.class);
+        WRAPPERS.put(int.class, Integer.class);
+        WRAPPERS.put(long.class, Long.class);
+        WRAPPERS.put(float.class, Float.class);
+        WRAPPERS.put(double.class, Double.class);
+        WRAPPERS.put(boolean.class, Boolean.class);
+    }
 
-  private PropertyChangeListener configChanged = {evt ->
-    config = null
-  } as PropertyChangeListener
+    @Bindable
+    ObservableList customSuffixes = [] as ObservableList
+    @Bindable
+    ObservableList basenames = [] as ObservableList
+    @Bindable
+    ObservableList basedirs = ['resources', 'i18n'] as ObservableList
+    @Bindable
+    Locale locale = Locale.default
+    @Bindable
+    ClassLoader loader = griffon.resourcemanager.ResourceManager.classLoader
+    @Bindable
+    String extension = 'groovy'
+    @Bindable
+    Class baseclass
+    ObservableMap binding = [:] as ObservableMap
+    org.slf4j.Logger log = LoggerFactory.getLogger(this.getClass())
 
-  ResourceManager() {
-    addPropertyChangeListener(configChanged)
-    customSuffixes.addPropertyChangeListener(configChanged)
-    basenames.addPropertyChangeListener(configChanged)
-    basedirs.addPropertyChangeListener(configChanged)
-    binding.addPropertyChangeListener(configChanged)
-  }
+    ResourceBuilder builder = new ResourceBuilder()
 
-  @Override
-  Object clone() {
-    new ResourceManager(customSuffixes: customSuffixes, basenames: basenames, basedirs: basedirs,
-            locale: locale, loader: loader, extension: extension, baseclass: baseclass, binding: binding)
-  }
+    private ConfigSlurper slurper = new ConfigSlurper()
+    private ConfigObject config
 
-  @Override
-  Object invokeMethod(String name, ConfigObject config = null, Object args) {
-    Map data = [:]
-    int idx = 0
-    if (args instanceof Object[]) {
-      args.each { arg ->
-        if (arg instanceof Map) {
-          data.putAll(arg)
-        } else if (arg instanceof Collection) {
-          arg.each { a ->
-            data.put("_$idx".toString(), a)
-            idx++
-          }
-        } else {
-          data.put("_$idx".toString(), arg)
-          idx++
+    private PropertyChangeListener configChanged = {evt ->
+        config = null
+    } as PropertyChangeListener
+
+    ResourceManager() {
+        binding.rm = this
+        binding.builder = builder
+        addPropertyChangeListener(configChanged)
+        customSuffixes.addPropertyChangeListener(configChanged)
+        basenames.addPropertyChangeListener(configChanged)
+        basedirs.addPropertyChangeListener(configChanged)
+        binding.addPropertyChangeListener(configChanged)
+    }
+
+    @Override
+    Object clone() {
+        def newInstance = new ResourceManager(customSuffixes: customSuffixes, basenames: basenames, basedirs: basedirs,
+                locale: locale, loader: loader, extension: extension, baseclass: baseclass, binding: binding, log: log, builder: builder)
+        newInstance.binding.rm = newInstance
+        newInstance
+    }
+
+    Object invokeMethod(String name, ConfigObject config = null, Object args) {
+        return getObject(name, config, createMapFromArguments(args))
+    }
+
+    private Map createMapFromArguments(args) {
+        Map data = [:]
+        if (args instanceof Map) {
+            data.putAll(args)
+            return args
         }
-      }
-    } else {
-      data.put('_0', args)
-    }
-    return getObject(name, config, data)
-  }
-
-  @Override
-  Object getProperty(String property) {
-    if (hasProperty(property))
-      return this.getMetaClass().getProperty(this, property)
-    return getObject(property)
-  }
-
-  Object getObject(String key, ConfigObject cfg = null, Map data = [:]) {
-    if (!cfg)
-      cfg = getConfig()
-    if (!cfg)
-      return null
-    def object = cfg[key]
-    if (object instanceof String && data) {
-      def template = engine.createTemplate(object).make(data)
-      object = template.toString()
-    }
-    def rm = this
-    if (object instanceof ConfigObject) {
-      object.getMetaClass().methodMissing = {name, args ->
-        rm.invokeMethod(name, object, args)
-      }
-    }
-    return object
-  }
-
-  ConfigObject getConfig() {
-    if (!config) {
-      ConfigObject temp
-      def dirs = []
-      dirs.addAll(basedirs.reverse())
-      dirs.each { base ->
-        basenames.reverse().each {name ->
-          temp = processForName(name, base, temp, customSuffixes.reverse())
-        }
-      }
-      if (baseclass) {
-        temp = processForName(baseclass.simpleName, "${baseclass.package.name}.resources", temp, customSuffixes.reverse())
-        engine = new GStringTemplateEngine(baseclass.classLoader)
-      } else {
-        engine = new GStringTemplateEngine()
-      }
-      config = temp
-    }
-    return config
-  }
-
-  private def processForName(String name, String base, ConfigObject config, List customSuffixes) {
-    getCandidateLocales().each { loc ->
-      def cfg = getConfigObject("$base.$name$loc")
-      if (cfg)
-        config = merge(config, cfg)
-    }
-    customSuffixes.each {suffix ->
-      getCandidateLocales().each { loc ->
-        def cfg = getConfigObject("$base.$name$suffix$loc")
-        if (cfg)
-          config = merge(config, cfg)
-      }
-    }
-    return config
-  }
-
-  private ConfigObject merge(ConfigObject primary, ConfigObject secondary) {
-    if (!primary) {
-      primary = secondary
-    } else {
-      primary = primary.merge(secondary)
-    }
-    return primary
-  }
-
-  protected ConfigObject getConfigObject(String target) {
-    // Load by class if it exists
-    ConfigObject object
-    if (baseclass) {
-      try {
-        Class cls
-        cls = baseclass.classLoader.loadClass(target)
-        if (cls.isAssignableFrom(Script))
-          object = slurper.parse(cls)
-      } catch (ClassNotFoundException e) { }
-    }
-    String bundleName = target.replaceAll(/\./, '/')
-    URL url
-    // If not, load by .groovy
-    if (!object) {
-      url = loader.getResource("${bundleName}.$extension")
-      slurper.binding = binding
-      if (url)
-        object = slurper.parse(url)
-    }
-    // Load .properties
-    url = loader.getResource("${bundleName}.properties")
-    if (url) {
-      Properties prop = new Properties()
-      InputStream is = openPrivilegedInputStream(url)
-      if (is) {
-        prop.load(is)
-        is.close()
-      }
-      if (object)
-        object = slurper.parse(prop).merge(object)
-      else
-        object = slurper.parse(prop)
-    }
-  }
-
-  protected InputStream openPrivilegedInputStream(final URL url) throws IOException {
-    InputStream stream = null;
-    if (!url)
-      return null
-    try {
-      stream = AccessController.doPrivileged(
-              new PrivilegedExceptionAction<InputStream>() {
-                public InputStream run() throws IOException {
-                  URLConnection connection = url.openConnection()
-                  if (connection != null) {
-                    connection.useCaches = false
-                    return connection.inputStream
-                  }
-                  return null
+        int idx = 0
+        if (args instanceof Object[]) {
+            args.each { arg ->
+                if (arg instanceof Map) {
+                    data.putAll(arg)
+                } else if (arg instanceof Collection) {
+                    arg.each { a ->
+                        data.put("_$idx".toString(), a)
+                        idx++
+                    }
+                } else {
+                    data.put("_$idx".toString(), arg)
+                    idx++
                 }
-              });
-    } catch (PrivilegedActionException e) {
-      throw (IOException) e.getException()
+            }
+        } else {
+            data.put('_0', args)
+        }
+        return data
     }
-    return stream
-  }
 
-  List<String> getCandidateLocales() {
-    List<String> candidates = []
-    candidates << ""
-    if (locale.language)
-      candidates << "_${locale.language}"
-    if (locale.country)
-      candidates << "_${locale.language}_${locale.country}"
-    if (locale.variant)
-      candidates << "_${locale.language}_${locale.country}_${locale.variant}"
-    return candidates
-  }
+    Object getResource(String property) {
+        getProperty(property)
+    }
 
-  def getAt(String locale) {
-    def rm = clone()
-    rm.locale = getLocaleFromString(locale)
-    return rm
-  }
+    Object getResource(String property, Object defaultValue) {
+        def value = getProperty(property)
+        if (value == null || (value instanceof ConfigObject && value.size() == 0))
+            return defaultValue
+        else
+            return value
+    }
 
-  def getAt(Locale locale) {
-    def rm = clone()
-    rm.locale = locale ?: Locale.default
-    return rm
-  }
+    Object getResource(String property, Map data) {
+        invokeMethod(property, data)
+    }
 
-  def getAt(Class cls) {
-    def rm = clone()
-    rm.baseclass = cls
-    return rm
-  }
+    Object getResource(String property, Map data, Object defaultValue) {
+        def value = invokeMethod(property, data)
+        if (value == null || (value instanceof ConfigObject && value.size() == 0))
+            return defaultValue
+        else
+            return value
+    }
 
-  static Locale getLocaleFromString(String localeString) {
-    if (localeString == null)
-      return Locale.default;
-    localeString = localeString.trim();
-    return new Locale(* localeString.split('_'))
-  }
+    Object getResource(String property, Collection data) {
+        invokeMethod(property, createMapFromArguments(data))
+    }
 
-  /**
-   * The first one in the list has the highest priority
-   * @param customSuffixes
-   */
-  void setCustomSuffixes(Collection customSuffixes) {
-    this.customSuffixes.clear()
-    this.customSuffixes.addAll(customSuffixes)
-  }
+    Object getResource(String property, Collection data, Object defaultValue) {
+        def value = invokeMethod(property, createMapFromArguments(data))
+        if (value == null || (value instanceof ConfigObject && value.size() == 0))
+            return defaultValue
+        else
+            return value
+    }
 
-  /**
-   * The first one in the list has the highest priority
-   * @param basenames
-   */
-  void setBasenames(Collection basenames) {
-    this.basenames.clear()
-    this.basenames.addAll(basenames)
-  }
+    Object getResource(String property, Object[] data) {
+        invokeMethod(property, createMapFromArguments(data))
+    }
 
-  /**
-   * The first one in the list has the highest priority
-   * @param basedirs
-   */
-  void setBasedirs(Collection basedirs) {
-    this.basedirs.clear()
-    this.basedirs.addAll(basedirs)
-  }
+    Object getResource(String property, Object[] data, Object defaultValue) {
+        def value = invokeMethod(property, createMapFromArguments(data))
+        if (value == null || (value instanceof ConfigObject && value.size() == 0))
+            return defaultValue
+        else
+            return value
+    }
 
+    @Override
+    Object getProperty(String property) {
+        if (hasProperty(property))
+            return this.getMetaClass().getProperty(this, property)
+        return getObject(property)
+    }
+
+    Object getObject(String key, ConfigObject cfg = null, Map data = [:]) {
+        if (!cfg)
+            cfg = getConfig()
+        if (!cfg)
+            return null
+        def object = cfg[key]
+        if (object instanceof String && data)
+            object = fillIn(object, data)
+        def rm = this
+        if (object instanceof ConfigObject) {
+            object.getMetaClass().methodMissing = {name, args ->
+                rm.invokeMethod(name, object, args)
+            }
+        }
+        return object
+    }
+
+    String fillIn(String template, Map data) {
+        def escaped = false
+        def checkDigit = false
+        def result = new StringBuilder()
+        for (int p = 0; p < template.size(); p++) {
+            char c = template.charAt(p)
+            switch (c) {
+                case '\\':
+                    escaped = true
+                    checkDigit = false
+                    break
+                case '#':
+                    if (escaped) {
+                        result << c
+                        checkDigit = false
+                    } else {
+                        result << '$'
+                        checkDigit = true
+                    }
+                    escaped = false
+                    break
+                case '0'..'9':
+                    if (checkDigit)
+                        result << '_'
+                    result << c
+                    escaped = false
+                    checkDigit = false
+                    break
+                default:
+                    result << c
+                    escaped = false
+                    checkDigit = false
+            }
+        }
+        def shell
+        if (baseclass)
+            shell = new GroovyShell(baseclass.classLoader, new Binding(data))
+        else
+            shell = new GroovyShell(new Binding(data))
+        return shell.evaluate("\"$result\"")
+    }
+
+    ConfigObject getConfig() {
+        if (!config) {
+            ConfigObject temp
+            def dirs = []
+            dirs.addAll(basedirs.reverse())
+            dirs.each { base ->
+                basenames.reverse().each {name ->
+                    temp = processForName(name, base, temp, customSuffixes.reverse())
+                }
+            }
+            temp = processForName(baseclass.simpleName, "${baseclass.package.name}.resources", temp, customSuffixes.reverse())
+            config = temp
+        }
+        return config
+    }
+
+    private def processForName(String name, String base, ConfigObject config, List customSuffixes) {
+        getCandidateLocales().each { loc ->
+            def cfg = getConfigObject("$base.$name$loc")
+            if (cfg)
+                config = merge(config, cfg)
+        }
+        customSuffixes.each {suffix ->
+            getCandidateLocales().each { loc ->
+                def cfg = getConfigObject("$base.$name$suffix$loc")
+                if (cfg)
+                    config = merge(config, cfg)
+            }
+        }
+        return config
+    }
+
+    private ConfigObject merge(ConfigObject primary, ConfigObject secondary) {
+        if (!primary) {
+            primary = secondary
+        } else {
+            primary = primary.merge(secondary)
+        }
+        return primary
+    }
+
+    protected ConfigObject getConfigObject(String target) {
+        // Load by class if it exists
+        ConfigObject object
+        if (baseclass) {
+            try {
+                Class cls
+                cls = loader.loadClass(target)
+                if (Script.isAssignableFrom(cls)) {
+                    slurper.binding = binding
+                    object = slurper.parse(cls)
+                }
+            } catch (ClassNotFoundException e) { }
+        }
+        String bundleName = target.replaceAll(/\./, '/')
+        URL url
+        // If not, load by .groovy
+        if (!object) {
+            url = loader.getResource("${bundleName}.$extension")
+            slurper.binding = binding
+            if (url) {
+                object = slurper.parse(url)
+            }
+        }
+        // Load .properties
+        url = loader.getResource("${bundleName}.properties")
+        if (url) {
+            Properties prop = new Properties()
+            InputStream is = openPrivilegedInputStream(url)
+            if (is) {
+                prop.load(is)
+                is.close()
+            }
+            if (object)
+                object = slurper.parse(prop).merge(object)
+            else
+                object = slurper.parse(prop)
+        }
+    }
+
+    protected InputStream openPrivilegedInputStream(final URL url) throws IOException {
+        InputStream stream = null;
+        if (!url)
+            return null
+        try {
+            stream = AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<InputStream>() {
+                        public InputStream run() throws IOException {
+                            URLConnection connection = url.openConnection()
+                            if (connection != null) {
+                                connection.useCaches = false
+                                return connection.inputStream
+                            }
+                            return null
+                        }
+                    });
+        } catch (PrivilegedActionException e) {
+            throw (IOException) e.getException()
+        }
+        return stream
+    }
+
+    List<String> getCandidateLocales() {
+        List<String> candidates = []
+        candidates << ""
+        if (locale.language)
+            candidates << "_${locale.language}"
+        if (locale.country)
+            candidates << "_${locale.language}_${locale.country}"
+        if (locale.variant)
+            candidates << "_${locale.language}_${locale.country}_${locale.variant}"
+        return candidates
+    }
+
+    def getAt(String locale) {
+        def rm = clone()
+        rm.locale = getLocaleFromString(locale)
+        return rm
+    }
+
+    def getAt(Locale locale) {
+        def rm = clone()
+        rm.locale = locale ?: Locale.default
+        return rm
+    }
+
+    def getAt(Class cls) {
+        def rm = clone()
+        rm.baseclass = cls
+        return rm
+    }
+
+    static Locale getLocaleFromString(String localeString) {
+        if (localeString == null)
+            return Locale.default;
+        localeString = localeString.trim();
+        return new Locale(* localeString.split('_'))
+    }
+
+    /**
+     * The first one in the list has the highest priority
+     * @param customSuffixes
+     */
+    void setCustomSuffixes(Collection customSuffixes) {
+        this.customSuffixes.clear()
+        this.customSuffixes.addAll(customSuffixes)
+    }
+
+    /**
+     * The first one in the list has the highest priority
+     * @param basenames
+     */
+    void setBasenames(Collection basenames) {
+        this.basenames.clear()
+        this.basenames.addAll(basenames)
+    }
+
+    /**
+     * The first one in the list has the highest priority
+     * @param basedirs
+     */
+    void setBasedirs(Collection basedirs) {
+        this.basedirs.clear()
+        this.basedirs.addAll(basedirs)
+    }
+
+    void injectProperties(def bean, Class cls = bean.getClass(), String prefix = 'injections') {
+        ResourceManager rm = this[cls]
+        Map base = rm."$prefix".flatten([:])
+        def self = this
+        base.each { key, value ->
+            try {
+                if (value instanceof Closure)
+                    value = value.call()
+                def obj = bean
+                def parts = key.split(/\./)
+                parts.eachWithIndex {part, idx ->
+                    if (idx == parts.size() - 1) {
+                        def type = obj?.getMetaClass()?.getMetaProperty(part)?.type
+                        if (type) {
+                            if (type.isPrimitive())
+                                type = WRAPPERS[type]
+                            if (!type.isAssignableFrom(value.getClass()))
+                                value = registry.convertIfNecessary(value, type)
+                        }
+                        obj."$part" = value
+                    } else
+                        obj = obj."$part"
+                }
+            } catch (e) {
+                log.warn("Error injecting key [$key] into [$bean]", e)
+            }
+        }
+    }
+
+    void injectComponents(def component) {
+
+    }
+
+    static void registerEditor(Class cls, PropertyEditor editor) {
+        registry.registerSharedEditor(cls, editor)
+    }
 }
