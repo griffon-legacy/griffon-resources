@@ -1,6 +1,5 @@
 package griffon.resourcemanager
 
-import griffon.resourcemanager.ToStringEditor
 import groovy.beans.Bindable
 import java.beans.PropertyChangeListener
 import java.beans.PropertyEditor
@@ -9,8 +8,6 @@ import java.security.PrivilegedActionException
 import java.security.PrivilegedExceptionAction
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanWrapperImpl
-import org.codehaus.groovy.runtime.metaclass.ClosureMetaMethod
-import org.codehaus.griffon.runtime.builder.UberBuilder
 
 /*
  * Copyright 2010 the original author or authors.
@@ -77,6 +74,7 @@ class ResourceManager implements Cloneable {
     ResourceManager() {
         binding.rm = this
         binding.builder = builder
+        binding.r = builder
         addPropertyChangeListener(configChanged)
         customSuffixes.addPropertyChangeListener(configChanged)
         basenames.addPropertyChangeListener(configChanged)

@@ -17,12 +17,18 @@ public class ResourceBuilder extends FactoryBuilderSupport {
 		}
 
 		def registerFactories() {
-            registerFactory("url", new PropertyEditorBasedFactory(URLEditor, modifyMap: {attr -> attr.source ?: attr.url ?: attr.src}))
-            registerFactory("uri", new PropertyEditorBasedFactory(URIEditor, modifyMap: {attr -> attr.source ?: attr.uri ?: attr.src}))
+            registerFactory("url", new PropertyEditorBasedFactory(URLEditor, modifyMap: {attr ->
+                attr.source ?: attr.url ?: attr.src
+            }))
+            registerFactory("uri", new PropertyEditorBasedFactory(URIEditor, modifyMap: {attr ->
+                attr.source ?: attr.uri ?: attr.src
+            }))
             registerFactory("dimension", new PropertyEditorBasedFactory(DimensionEditor))
             registerFactory("insets", new PropertyEditorBasedFactory(InsetsEditor))
             registerFactory("point", new PropertyEditorBasedFactory(PointEditor))
-            registerFactory("locale", new PropertyEditorBasedFactory(LocaleEditor, modifyMap: {attr -> attr.locale}))
+            registerFactory("locale", new PropertyEditorBasedFactory(LocaleEditor, modifyMap: {attr ->
+                attr.locale
+            }))
             registerFactory("rectangle", new PropertyEditorBasedFactory(RectangleEditor))
             registerFactory("color", new PropertyEditorBasedFactory(ColorEditor))
             registerFactory("font", new PropertyEditorBasedFactory(FontEditor))

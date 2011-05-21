@@ -40,18 +40,28 @@ class PropertyEditorBasedFactory extends AbstractFactory {
         this.modifyMap = params.modifyMap
     }
 
+    @Override
     Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attr) {
         def editor = this.editor.newInstance()
-        try {
-            editor.setValue(modifyValue ? modifyValue(value) : value)
-        } catch (IllegalArgumentException e) {
+        if (value) {
             try {
-                editor.setValue(modifyMap ? modifyMap(attr) : attr)
-            } catch (IllegalArgumentException e1) {
-                throw new IllegalArgumentException("${e.getMessage()} / ${e1.getMessage()}")
+                translate(editor, (this.modifyValue ? this.modifyValue(value) : value))
+            } catch (Exception e) {
+                throw new IllegalArgumentException(e)
+            }
+        } else {
+            try {
+                translate(editor, (this.modifyMap ? this.modifyMap(attr) : attr))
+                attr.clear()
+            } catch (Exception e) {
+                throw new IllegalArgumentException(e)
             }
         }
         return editor.getValue()
+    }
+
+    private translate(PropertyEditor editor, def value) {
+        (value instanceof String) ? editor.setAsText(value) : editor.setValue(value)
     }
 
     @Override

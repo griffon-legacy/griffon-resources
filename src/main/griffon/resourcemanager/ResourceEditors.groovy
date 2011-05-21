@@ -29,8 +29,8 @@ import java.awt.*
 
 class ToStringEditor extends PropertyEditorSupport {
     @Override
-    void setValue(Object value) throws IllegalArgumentException {
-        super.setValue(value == null ? null : value.toString())
+    void setValue(Object o) throws IllegalArgumentException {
+        super.setValue(o == null ? null : o.toString())
     }
 
     @Override
@@ -46,38 +46,46 @@ class ColorEditor extends PropertyEditorSupport {
     }
 
     @Override
-    void setValue(Object value) throws IllegalArgumentException {
+    void setValue(Object o) throws IllegalArgumentException {
         try {
-            if (value instanceof String) {
-                if (value.startsWith('#')) {
-                    switch (value.size()) {
+            if (o instanceof String || o instanceof GString) {
+                if (o.startsWith('#')) {
+                    switch (o.size()) {
                         case 4:
-                            value = "#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}FF"
+                            o = "#${o[1]}${o[1]}${o[2]}${o[2]}${o[3]}${o[3]}FF"
+                            break
+                        case 5:
+                            o = "#${o[1]}${o[1]}${o[2]}${o[2]}${o[3]}${o[3]}${o[4]}${o[4]}"
+                            break
                         case 7:
-                            value = "#${value[1..6]}FF"
+                            o = "#${o[1..6]}FF"
+                            break
                         case 9:
-                            super.setValue(new Color(Integer.parseInt(value[1..2], 16), Integer.parseInt(value[3..4], 16), Integer.parseInt(value[5..6], 16), Integer.parseInt(value[7..8], 16)))
+                            break
+                        default:
+                            throw new IllegalArgumentException("Incorrect Color format: $o")
                     }
+                    super.setValue(new Color(Integer.parseInt(o[1..2], 16), Integer.parseInt(o[3..4], 16), Integer.parseInt(o[5..6], 16), Integer.parseInt(o[7..8], 16)))
                 } else {
-                    def color = Color.getColor(value)
+                    def color = Color.@"$o"
                     if (color) super.setValue(color)
                 }
-            } else if (value instanceof Collection) {
-                switch (value.size()) {
+            } else if (o instanceof Collection) {
+                switch (o.size()) {
                     case 3:
-                        value << 255
+                        o += 255
                     case 4:
-                        super.setValue(new Color(value[0] as int, value[1] as int, value[2] as int, value[3] as int))
+                        super.setValue(new Color(o[0] as int, o[1] as int, o[2] as int, o[3] as int))
                 }
-            } else if (value instanceof Map) {
-                def r = value['red'] ?: value['r'] ?: 0
-                def g = value['green'] ?: value['g'] ?: 0
-                def b = value['blue'] ?: value['b'] ?: 0
-                def a = value['alpha'] ?: value['a'] ?: 255
+            } else if (o instanceof Map) {
+                def r = o['red'] ?: o['r'] ?: 0
+                def g = o['green'] ?: o['g'] ?: 0
+                def b = o['blue'] ?: o['b'] ?: 0
+                def a = o['alpha'] ?: o['a'] ?: 255
                 super.setValue(new Color(r as int, g as int, b as int, a as int))
             } else
-                throw new IllegalArgumentException("Incorrect Color format: $value")
-        } catch (e) {throw new IllegalArgumentException("Incorrect Color format: $value", e)}
+                throw new IllegalArgumentException("Incorrect Color format: $o")
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect Color format: $o", e)}
     }
 }
 
@@ -88,20 +96,20 @@ class DimensionEditor extends PropertyEditorSupport {
     }
 
     @Override
-    void setValue(Object value) throws IllegalArgumentException {
+    void setValue(Object o) throws IllegalArgumentException {
         try {
             int w, h
-            if (value instanceof String) {
-                (w, h) = value.split(/\s*,\s*/).collect {it as int}
-            } else if ((value instanceof Collection && value.size() > 1) || (value instanceof Object[] && value.length > 1)) {
-                (w, h) = value
-            } else if (value instanceof Map) {
-                w = (value['width'] ?: value['w'] ?: 0) as int
-                h = (value['height'] ?: value['h'] ?: 0) as int
+            if (o instanceof String || o instanceof GString) {
+                (w, h) = o.split(/\s*,\s*/).collect {it as int}
+            } else if ((o instanceof Collection && o.size() > 1) || (o instanceof Object[] && o.length > 1)) {
+                (w, h) = o
+            } else if (o instanceof Map) {
+                w = (o['width'] ?: o['w'] ?: 0) as int
+                h = (o['height'] ?: o['h'] ?: 0) as int
             } else
-                throw new IllegalArgumentException("Incorrect Dimension format: $value")
+                throw new IllegalArgumentException("Incorrect Dimension format: $o")
             super.setValue(new Dimension(w, h))
-        } catch (e) {throw new IllegalArgumentException("Incorrect Dimension format: $value", e)}
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect Dimension format: $o", e)}
     }
 }
 
@@ -115,19 +123,19 @@ class InsetsEditor extends PropertyEditorSupport {
     void setValue(Object o) throws IllegalArgumentException {
         try {
             int t = 0, l = 0, b = 0, r = 0
-            if (o instanceof String) {
+            if (o instanceof String || o instanceof GString) {
                 (t, l, b, r) = o.split(/\s*,\s*/).collect {it as int}
             } else if ((o instanceof Collection && o.size() > 3) || (o instanceof Object[] && o.length > 3)) {
                 (t, l, b, r) = o
-            } else if (value instanceof Map) {
-                t = (value['top'] ?: value['t'] ?: 0) as int
-                l = (value['left'] ?: value['l'] ?: 0) as int
-                r = (value['right'] ?: value['r'] ?: 0) as int
-                b = (value['bottom'] ?: value['b'] ?: 0) as int
+            } else if (o instanceof Map) {
+                t = (o['top'] ?: o['t'] ?: 0) as int
+                l = (o['left'] ?: o['l'] ?: 0) as int
+                r = (o['right'] ?: o['r'] ?: 0) as int
+                b = (o['bottom'] ?: o['b'] ?: 0) as int
             } else
                 throw new IllegalArgumentException("Incorrect Insets format: $o")
             super.setValue(new Insets(t, l, b, r))
-        } catch (e) {throw new IllegalArgumentException("Incorrect Insets format: $o", e)}
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect Insets format: $o", e)}
     }
 }
 
@@ -141,18 +149,17 @@ class PointEditor extends PropertyEditorSupport {
     void setValue(Object o) throws IllegalArgumentException {
         try {
             int x, y
-            if (o instanceof String) {
+            if (o instanceof String || o instanceof GString) {
                 (x, y) = o.split(/\s*,\s*/).collect {it as int}
             } else if ((o instanceof Collection && o.size() > 1) || (o instanceof Object[] && o.length > 1)) {
                 (x, y) = o
-            } else if (value instanceof Map) {
-                x = (value['x'] ?: 0) as int
-                y = (value['y'] ?: 0) as int
+            } else if (o instanceof Map) {
+                x = (o['x'] ?: 0) as int
+                y = (o['y'] ?: 0) as int
             } else
                 throw new IllegalArgumentException("Incorrect Point format: $o")
             super.setValue(new Point(x, y))
-        } catch (e) {throw new IllegalArgumentException("Incorrect Point format: $o", e)}
-        throw new IllegalArgumentException("Incorrect Point format: $o")
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect Point format: $o", e)}
     }
 }
 
@@ -166,31 +173,34 @@ class RectangleEditor extends PropertyEditorSupport {
     void setValue(Object o) throws IllegalArgumentException {
         try {
             int x, y, w, h
-            if (o instanceof String) {
-                (x, y, w, h) = o.split(/\s*,\s*/).collect {it as int}
-            } else if ((o instanceof Collection && o.size() > 3) || (o instanceof Object[] && o.length > 3)) {
-                (x, y, w, h) = o
+            if (o instanceof String || o instanceof GString) {
+                o = o.split(/\s*,\s*/)
+            }
+            if ((o instanceof Collection && o.size() > 3) || (o instanceof Object[] && o.length > 3)) {
+                (x, y, w, h) = o.collect {it as int}
             } else if (o instanceof Map) {
                 x = (o['x'] ?: 0) as int
                 y = (o['y'] ?: 0) as int
                 w = (o['width'] ?: o['w'] ?: 0) as int
                 h = (o['height'] ?: o['h'] ?: 0) as int
-                if(o.dimension instanceof Dimension) {
+                if (o.dimension instanceof Dimension) {
                     w = o.dimension.@width
                     h = o.dimension.@height
                 }
-                if(o.point instanceof Point) {
-                    x = o.dimension.@x
-                    y = o.dimension.@y
+                if (o.point instanceof Point) {
+                    x = o.point.@x
+                    y = o.point.@y
                 }
             } else
                 throw new IllegalArgumentException("Incorrect Rectangle format: $o")
             super.setValue(new Rectangle(x, y, w, h))
-        } catch (e) {throw new IllegalArgumentException("Incorrect Rectangle format: $o", e)}
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect Rectangle format: $o", e)}
     }
 }
 
 class FontEditor extends PropertyEditorSupport {
+    private GroovyShell shell = new GroovyShell(new TolerantBinding())
+
     @Override
     void setAsText(String text) throws IllegalArgumentException {
         setValue(text)
@@ -200,73 +210,66 @@ class FontEditor extends PropertyEditorSupport {
     void setValue(Object o) throws IllegalArgumentException {
         try {
             Map<TextAttribute, ?> attributes = [:]
-            if (o instanceof String) {
-                def matcher = o =~ /^\s*((\w*\s*)*)((\[.*\])\s*)?$/
-                def parts = matcher[0][1].split()
-                def map = matcher[0][3] ? new GroovyShell().evaluate(matcher[0][3]) : [:]
-                if (!map instanceof Map)
-                    throw new RuntimeException("Attributes in incorrect format")
-                if (parts.size() < 2)
-                    throw new RuntimeException("Please specify at least name and size")
-                attributes[TextAttribute.FAMILY] = ensureFontIsInstalled(parts[0])
-                attributes[TextAttribute.SIZE] = parts[1] as BigDecimal
-                for (int i = 2; i < parts.size(); i++) {
-                    def part = parts[i].toUpperCase()
-                    switch (part) {
-                        case 'BOLD':
-                            attributes[TextAttribute.WEIGHT] = TextAttribute.WEIGHT_BOLD
-                            break
-                        case 'ITALIC':
-                            attributes[TextAttribute.POSTURE] = TextAttribute.POSTURE_OBLIQUE
-                            break
-                        case 'UNDERLINE':
-                            attributes[TextAttribute.UNDERLINE] = TextAttribute.UNDERLINE_ON
-                            break
-                        case 'STRIKETHROUGH':
-                            attributes[TextAttribute.STRIKETHROUGH] = TextAttribute.STRIKETHROUGH_ON
-                            break
-                    }
-                }
-                map.each {k, v ->
-                    k = k.toUpperCase()
-                    def attrib = TextAttribute.@"$k"
-                    if (attrib == TextAttribute.FAMILY)
-                        attributes[attrib] = ensureFontIsInstalled(v)
-                    else if (v instanceof String) {
-                        attributes[attrib] = TextAttribute.@"${k}_${v.toUpperCase()}"
-                    } else {
-                        attributes[attrib] = v
+            //'Times New Roman', 12, bold, italic, underline, strikethrough, [kerning: on]
+            if (o instanceof String || o instanceof GString)
+                o = shell.evaluate("[$o]")
+            if (o instanceof Collection) {
+                o.eachWithIndex { part, idx ->
+                    if (idx == 0)
+                        attributes[TextAttribute.FAMILY] = ensureFontIsInstalled(part)
+                    else if (idx == 1)
+                        attributes[TextAttribute.SIZE] = part as BigDecimal
+                    else {
+                        switch (part) {
+                            case ~/(?i)bold/:
+                                attributes[TextAttribute.WEIGHT] = TextAttribute.WEIGHT_BOLD
+                                break
+                            case ~/(?i)italic/:
+                                attributes[TextAttribute.POSTURE] = TextAttribute.POSTURE_OBLIQUE
+                                break
+                            case ~/(?i)underline/:
+                                attributes[TextAttribute.UNDERLINE] = TextAttribute.UNDERLINE_ON
+                                break
+                            case ~/(?i)strikethrough/:
+                                attributes[TextAttribute.STRIKETHROUGH] = TextAttribute.STRIKETHROUGH_ON
+                                break
+                            case {it instanceof Map}:
+                                addMapToAttributes(part, attributes)
+                                break
+                        }
                     }
                 }
             } else if (o instanceof Map) {
-                o.each { k, v ->
-                    def attrib
-                    if (k instanceof String) {
-                        k = k.toUpperCase()
-                        attrib = TextAttribute.@"$k"
-                        if (attrib == TextAttribute.FAMILY)
-                            attributes[attrib] = ensureFontIsInstalled(v)
-                        else if (v instanceof String) {
-                            attributes[attrib] = TextAttribute.@"${k}_${v.toUpperCase()}"
-                        } else {
-                            attributes[attrib] = v
-                        }
-                    } else if (k instanceof TextAttribute) {
-                        attributes[k] = v
-                    }
-                }
+                addMapToAttributes(o, attributes)
             }
             if (attributes) {
                 super.setValue(new Font(attributes))
                 return
             }
-        } catch (e) {throw new IllegalArgumentException("Incorrect Font format: $o", e)}
-        throw new IllegalArgumentException("Incorrect Rectangle format: $o")
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect Font format: $o", e)}
+    }
+
+    private def addMapToAttributes(Map map, Map<TextAttribute, ?> attributes) {
+        map.each { k, v ->
+            if (k instanceof String) {
+                k = k.toUpperCase()
+                def attr = TextAttribute.@"$k"
+                if (attr == TextAttribute.FAMILY)
+                    attributes[attr] = ensureFontIsInstalled(v)
+                else if (v instanceof String) {
+                    attributes[attr] = TextAttribute.@"${k}_${v.toUpperCase()}"
+                } else {
+                    attributes[attr] = v
+                }
+            } else if (k instanceof TextAttribute) {
+                attributes[k] = v
+            }
+        }
     }
 
     private String ensureFontIsInstalled(def name) {
+        URL source
         try {
-            URL source
             if (name instanceof URL)
                 source = name
             else if (name instanceof URI)
@@ -298,7 +301,7 @@ class ImageEditor extends PropertyEditorSupport {
             if (o instanceof Map)
                 o = o.source ?: o.src
             def img
-            if (o instanceof String)
+            if (o instanceof String || o instanceof GString)
                 img = ImageIO.read(o.toURL())
             else if (o instanceof File)
                 img = ImageIO.read(o)
@@ -311,11 +314,11 @@ class ImageEditor extends PropertyEditorSupport {
             else if (o instanceof InputStream)
                 img = ImageIO.read(o)
             else if (o instanceof byte[])
-                img = new BufferedImage(new ImageIcon(o))
+                img = new ImageIcon(o).image
             else
                 throw new IllegalArgumentException("Incorrect Image format: $o")
             super.setValue(img)
-        } catch (e) {throw new IllegalArgumentException("Incorrect Image format: $o", e)}
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect Image format: $o", e)}
 
     }
 }
@@ -332,11 +335,14 @@ class IconEditor extends PropertyEditorSupport {
             def source
             def description
             if (o instanceof Map) {
-                o = o.source ?: o.src
                 description = o.description
+                o = o.source ?: o.src
+            } else if (o instanceof Collection) {
+                o = o[0]
+                description = o[1]
             }
-            if (o instanceof String) {
-                def parts = source.split(/\s*,\s*/)
+            if (o instanceof String || o instanceof GString) {
+                def parts = o.split(/\s*,\s*/)
                 source = parts[0].toURL()
                 description = parts.size() > 1 ? parts[1] : null
             } else if (o instanceof File)
@@ -366,12 +372,14 @@ class IconEditor extends PropertyEditorSupport {
                 super.setValue(icon)
                 return
             }
-        } catch (e) {throw new IllegalArgumentException("Incorrect Icon format: $o", e)}
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect Icon format: $o", e)}
         throw new IllegalArgumentException("Incorrect Icon format: $o")
     }
 }
 
 class GradientPaintEditor extends PropertyEditorSupport {
+    private GroovyShell shell = new GroovyShell(new TolerantBinding())
+
     @Override
     void setAsText(String text) throws IllegalArgumentException {
         setValue(text)
@@ -383,20 +391,21 @@ class GradientPaintEditor extends PropertyEditorSupport {
         try {
             float x1, y1, x2, y2
             Color c1, c2
-            if (o instanceof String) {
-                def i = 1
-                (x1, y1, c1, x2, y2, c2) = o.split(/\s*,\s*/).collect {
-                    def val
-                    if ((i % 3))
-                        val = it
-                    else {
-                        colorEditor.setValue(it)
-                        val = colorEditor.getValue()
-                    }
-                    i++
-                    return val
+            if (o instanceof String || o instanceof GString) {
+                // 10, 20, WHITE, 100, 200, #AA5500
+                o = shell.evaluate(TolerantBinding.escapeColorLiterals("[$o]"))
+                if (o.size() < 6)
+                    throw new IllegalArgumentException("Incorrect GradientPaint format: $o")
+            }
+            if ((o instanceof Collection && o.size() > 5) || (o instanceof Object[] && o.length > 5)) {
+                if (!(o[2] instanceof Color)) {
+                    colorEditor.setValue(o[2])
+                    o[2] = colorEditor.getValue()
                 }
-            } else if ((o instanceof Collection && o.size() > 5) || (o instanceof Object[] && o.length > 5)) {
+                if (!(o[5] instanceof Color)) {
+                    colorEditor.setValue(o[5])
+                    o[5] = colorEditor.getValue()
+                }
                 (x1, y1, c1, x2, y2, c2) = o
             } else if (o instanceof Map) {
                 x1 = (o['x1'] ?: 0)
@@ -411,7 +420,7 @@ class GradientPaintEditor extends PropertyEditorSupport {
                     c1 = colorEditor.getValue()
                 }
                 def col2 = o['endColor'] ?: o['color2'] ?: o['c2'] ?: Color.BLACK
-                if (col1 instanceof Color)
+                if (col2 instanceof Color)
                     c2 = col2
                 else {
                     colorEditor.setValue(col2)
@@ -420,15 +429,16 @@ class GradientPaintEditor extends PropertyEditorSupport {
             } else
                 throw new IllegalArgumentException("Incorrect GradientPaint format: $o")
             super.setValue(new GradientPaint(x1 as float, y1 as float, c1, x2 as float, y2 as float, c2))
-        } catch (e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException("Incorrect GradientPaint format: $o", e)
         }
     }
 }
 
 class LinearGradientPaintEditor extends PropertyEditorSupport {
-    @Override
+    private GroovyShell shell = new GroovyShell(new TolerantBinding())
 
+    @Override
     void setAsText(String text) throws IllegalArgumentException {
         setValue(text)
     }
@@ -438,115 +448,126 @@ class LinearGradientPaintEditor extends PropertyEditorSupport {
         ColorEditor colorEditor = new ColorEditor()
         try {
             def x1, y1, x2, y2
-            Map<Float, Color> colors = []
+            Map<Float, Color> colors = [:]
             CycleMethod cycleMethod = CycleMethod.REPEAT
-            if (o instanceof String) {
-                o = o.trim()
+            if (o instanceof String || o instanceof GString) {
+                // "10, 20, 100, 200, [0.0: WHITE, 0.5: #AAAAAA, 1.0: BLACK]"
                 // "10, 20, 100, 200, [0.0: WHITE, 0.5: #AAAAAA, 1.0: BLACK], REPEAT"
-                def b1 = o.indexOf('[')
-                def b2 = src.indexOf(']')
-                (x1, y1, x2, y2) = src.substring(0, b1).split(/\s*,\s*/)
-                colors = src.substring(b1 + 1, b2).split(/\s*,\s*/).collect {
-                    def p = it.split(/\s*:\s*/)
-                    colorEditor.setValue(p[1])
-                    [p[0] as float, colorEditor.getValue()]
-                }
-                if (src.length() > b2 + 1) {
-                    def sub = src.substring(b2 + 1).tr(',', ' ').trim().toUpperCase()
-                    switch (sub) {
-                        case 'REPEAT':
-                            cycleMethod = CycleMethod.REPEAT
-                        case 'REFLECT':
-                            cycleMethod = CycleMethod.REFLECT
-                        case 'NO_CYCLE':
-                            cycleMethod = CycleMethod.NO_CYCLE
+                o = shell.evaluate(TolerantBinding.escapeColorLiterals("[$o]"))
+            }
+            if ((o instanceof Collection && o.size() > 4) || (o instanceof Object[] && o.length > 4)) {
+                (x1, y1, x2, y2) = o
+                o[4].each {k, v ->
+                    if (!(v instanceof Color)) {
+                        colorEditor.setValue(v)
+                        v = colorEditor.getValue()
                     }
+                    colors[k as float] = v
                 }
-            } else if ((o instanceof Collection && o.size() > 5) || (o instanceof Object[] && o.length > 5)) {
-                (x1, y1, x2, y2, colors, cycleMethod) = o
+                if (o[5] instanceof CycleMethod)
+                    cycleMethod = o[5]
+                else if (o[5] instanceof String)
+                    cycleMethod = CycleMethod.@"${o[5]}"
             }
             else if (o instanceof Map) {
                 x1 = (o['x1'] ?: 0)
                 y1 = (o['y1'] ?: 0)
                 x2 = (o['x2'] ?: 0)
                 y2 = (o['y2'] ?: 0)
-                colors = o['colors'] ?: o['c']
+                colors = o['colors'] ?: o['cols']
+                colors.each{k,v ->
+                    if (!(v instanceof Color)) {
+                        colorEditor.setValue(v)
+                        colors[k] = colorEditor.getValue()
+                    }
+                }
                 cycleMethod = o['cycleMethod'] ?: o['cycle'] ?: CycleMethod.REPEAT
             } else
                 throw new IllegalArgumentException("Incorrect LinearGradientPaint format:  $o")
             super.setValue(new LinearGradientPaint(x1 as float, y1 as float, x2 as float, y2 as float, colors.keySet() as float[], colors.values() as Color[], cycleMethod))
-        } catch (e) {throw new IllegalArgumentException("Incorrect LinearGradientPaint format:  $o", e)}
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect LinearGradientPaint format:  $o", e)}
     }
 }
 
 class RadialGradientPaintEditor extends PropertyEditorSupport {
-    @Override
+    private GroovyShell shell = new GroovyShell(new TolerantBinding())
+    private ColorEditor colorEditor = new ColorEditor()
 
+    @Override
     void setAsText(String text) throws IllegalArgumentException {
         setValue(text)
     }
 
     @Override
     void setValue(Object o) throws IllegalArgumentException {
-        ColorEditor colorEditor = new ColorEditor()
         try {
             def cx, cy, fx = null, fy = null, r
-            Map<Float, Color> colors = []
+            Map<Float, Color> colors = [:]
             CycleMethod cycleMethod = CycleMethod.REPEAT
-            if (o instanceof String) {
-                o = o.trim()
+            if (o instanceof String || o instanceof GString) {
+                // "100, 200, 50, [0.0: WHITE, 0.5: #AAAAAA, 1.0: BLACK]"
                 // "100, 200, 50, [0.0: WHITE, 0.5: #AAAAAA, 1.0: BLACK], REPEAT"
+                // "100, 200, 10, 20, 50, [0.0: WHITE, 0.5: #AAAAAA, 1.0: BLACK]"
                 // "100, 200, 10, 20, 50, [0.0: WHITE, 0.5: #AAAAAA, 1.0: BLACK], REPEAT"
-                def b1 = o.indexOf('[')
-                def b2 = src.indexOf(']')
-                def parts = src.substring(0, b1).split(/\s*,\s*/)
-                if (parts.length == 3)
-                    (cx, cy, r) = parts
-                else
-                    (cx, cy, fx, fy, r) = parts
-                colors = src.substring(b1 + 1, b2).split(/\s*,\s*/).collect {
-                    def p = it.split(/\s*:\s*/)
-                    colorEditor.setValue(p[1])
-                    [p[0] as float, colorEditor.getValue()]
-                }
-                if (src.length() > b2 + 1) {
-                    def sub = src.substring(b2 + 1).tr(',', ' ').trim().toUpperCase()
-                    switch (sub) {
-                        case 'REPEAT':
-                            cycleMethod = CycleMethod.REPEAT
-                        case 'REFLECT':
-                            cycleMethod = CycleMethod.REFLECT
-                        case 'NO_CYCLE':
-                            cycleMethod = CycleMethod.NO_CYCLE
-                    }
-                }
-            } else if ((o instanceof Collection && o.size() > 6) || (o instanceof Object[] && o.length > 6)) {
-                if (o.length == 4 | o.length == 5)
-                    (cx, cy, r, colors, cycleMethod) = o
-                else if (o.length > 5)
-                    (cx, cy, fx, fy, r, colors, cycleMethod) = o
-                else
-                    throw new IllegalArgumentException("Incorrect RadialGradientPaint format:  $o")
+                o = shell.evaluate(TolerantBinding.escapeColorLiterals("[$o]"))
             }
-            else if (o instanceof Map) {
+            if ((o instanceof Collection && o.size() > 3) || (o instanceof Object[] && o.length > 3)) {
+                if (o.size() > 5) {
+                    (cx, cy, fx, fy, r) = o
+                    colors = convertColors(o[5])
+                    cycleMethod = convertCycleMethod(o[6])
+                } else {
+                    (cx, cy, r) = o
+                    colors = convertColors(o[3])
+                    cycleMethod = convertCycleMethod(o[4])
+                }
+            } else if (o instanceof Map) {
                 cx = (o['cx'] ?: 0)
                 cy = (o['cy'] ?: 0)
                 fx = (o['fx'] ?: null)
                 fy = (o['fy'] ?: null)
                 r = o['radius'] ?: o['r'] ?: 0
-                colors = o['colors'] ?: o['c']
+                colors = o['colors'] ?: o['cols']
+                colors.each{k,v ->
+                    if (!(v instanceof Color)) {
+                        colorEditor.setValue(v)
+                        colors[k] = colorEditor.getValue()
+                    }
+                }
                 cycleMethod = o['cycleMethod'] ?: o['cycle'] ?: CycleMethod.REPEAT
             } else
                 throw new IllegalArgumentException("Incorrect RadialGradientPaint format:  $o")
             if (fx == null || fy == null)
                 super.setValue(new RadialGradientPaint(cx as float, cy as float, r as float, colors.keySet() as float[], colors.values() as Color[], cycleMethod))
             else
-                super.setValue(new RadialGradientPaint(cx as float, cy as float, fx as float, fy as float, r as float, colors.keySet() as float[], colors.values() as Color[], cycleMethod))
-        } catch (e) {throw new IllegalArgumentException("Incorrect RadialGradientPaint format:  $o", e)}
+                super.setValue(new RadialGradientPaint(cx as float, cy as float, r as float, fx as float, fy as float, colors.keySet() as float[], colors.values() as Color[], cycleMethod))
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect RadialGradientPaint format:  $o", e)}
+    }
+
+    private Map convertColors(Map map) {
+        Map<Float, Color> colors = [:]
+        map.each {k, v ->
+            if (!(v instanceof Color)) {
+                colorEditor.setValue(v)
+                v = colorEditor.getValue()
+            }
+            colors[k as float] = v
+        }
+        colors
+    }
+
+    private CycleMethod convertCycleMethod(def value) {
+        if (value instanceof CycleMethod)
+            value
+        else if (value instanceof String)
+            CycleMethod.@"${value}"
+        CycleMethod.REPEAT
     }
 }
 
 class TexturePaintEditor extends PropertyEditorSupport {
+    private GroovyShell shell = new GroovyShell(new TolerantBinding())
+
     @Override
     void setAsText(String text) throws IllegalArgumentException {
         setValue(text)
@@ -557,14 +578,14 @@ class TexturePaintEditor extends PropertyEditorSupport {
         try {
             def img
             def anchor
-            if (o instanceof String) {
+            if (o instanceof String || o instanceof GString) {
                 def parts = o.split(/\s*,\s*/)
                 if (parts.length == 5) {
                     img = parts[0]
                     anchor = parts[1..4]
                 } else
                     throw new IllegalArgumentException("Incorrect TexturePaint format: $o")
-            } else if ((o instanceof Collection && o.size() > 2) || (o instanceof Object[] && o.length > 2)) {
+            } else if ((o instanceof Collection && o.size() > 1) || (o instanceof Object[] && o.length > 1)) {
                 img = o[0]
                 anchor = o[1]
             } else if (o instanceof Map) {
@@ -577,7 +598,7 @@ class TexturePaintEditor extends PropertyEditorSupport {
                 img = bufferImage(img)
             else {
                 def editor = new ImageEditor()
-                editor.setValue(o[0])
+                editor.setValue(img)
                 img = editor.getValue()
                 if (!img instanceof BufferedImage)
                     img = bufferImage(img)
@@ -589,7 +610,7 @@ class TexturePaintEditor extends PropertyEditorSupport {
                 anchor = editor.getValue()
             }
             super.setValue(new TexturePaint(img, anchor))
-        } catch (e) {throw new IllegalArgumentException("Incorrect TexturePaint format: $o", e)}
+        } catch (Exception e) {throw new IllegalArgumentException("Incorrect TexturePaint format: $o", e)}
     }
 
     static BufferedImage bufferImage(Image image, int type = BufferedImage.TYPE_INT_ARGB) {
@@ -626,5 +647,19 @@ class TexturePaintEditor extends PropertyEditorSupport {
                 Thread.sleep(300);
             } catch (InterruptedException e) {}
         }
+    }
+}
+
+class TolerantBinding extends Binding {
+    public Object getVariable(String name) {
+        try {
+            return super.getVariable(name)
+        } catch (Exception e) {
+            return name
+        }
+    }
+
+    public static String escapeColorLiterals(String src) {
+        src.replaceAll(/(#[0123456789abcdefABCDEF]*)/, /'$1'/)
     }
 }
