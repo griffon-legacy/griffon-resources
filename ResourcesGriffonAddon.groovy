@@ -5,7 +5,7 @@ import org.springframework.beans.propertyeditors.URLEditor
 import griffon.resourcemanager.*
 
 class ResourcesGriffonAddon {
-    private final ResourceManager resourceManager = new ResourceManager()
+    private ResourceManager resourceManager
     private static final String DEFAULT_I18N_FILE = 'messages'
 
     private GriffonApplication app
@@ -18,6 +18,7 @@ class ResourcesGriffonAddon {
         def basenames = app.config?.resources?.basenames ?: [DEFAULT_I18N_FILE]
         if (!basenames.contains(DEFAULT_I18N_FILE))
             basenames = [DEFAULT_I18N_FILE] + basenames
+        resourceManager = new ResourceManager(app)
         app.metaClass.resourceManager = resourceManager
         app.metaClass.rm = resourceManager
         resourceManager.basenames = basenames as ObservableList
@@ -28,7 +29,6 @@ class ResourcesGriffonAddon {
         resourceManager.extension = app.config?.resources?.extension ?: 'groovy'
         resourceManager.log = app.log
         this.app = app
-        resourceManager.binding.app = app
     }
 
     // called once, after all addons have been inited

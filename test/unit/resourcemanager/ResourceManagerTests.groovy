@@ -92,6 +92,8 @@ class ResourceManagerTests extends GriffonUnitTestCase {
 
         assert rm.test.dynamic(1,2) == '1 2'
         assert rm.test.dynamic(*[1, 2]) == '1 2'
+
+        assert rm.callTest == 'Test'
     }
 
     void testPropertyEditorsProperty() {

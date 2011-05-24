@@ -31,4 +31,9 @@ if (!addonIsSet1) {
     builderConfigFile.append('''
 root.'ResourcesGriffonAddon'.addon=true
 ''')
+    builderConfigFile.append('''
+rsc.'griffon.resourcemanager.ResourceBuilder'.model = '*'
+rsc.'griffon.resourcemanager.ResourceBuilder'.view = '*'
+rsc.'griffon.resourcemanager.ResourceBuilder'.controller = '*'
+''')
 }

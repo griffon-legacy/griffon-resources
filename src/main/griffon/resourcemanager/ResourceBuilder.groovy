@@ -17,27 +17,27 @@ public class ResourceBuilder extends FactoryBuilderSupport {
 		}
 
 		def registerFactories() {
-            registerFactory("url", new PropertyEditorBasedFactory(URLEditor, modifyMap: {attr ->
+            registerFactory("Url", new PropertyEditorBasedFactory(URLEditor, modifyMap: {attr ->
                 attr.source ?: attr.url ?: attr.src
             }))
-            registerFactory("uri", new PropertyEditorBasedFactory(URIEditor, modifyMap: {attr ->
+            registerFactory("Uri", new PropertyEditorBasedFactory(URIEditor, modifyMap: {attr ->
                 attr.source ?: attr.uri ?: attr.src
             }))
-            registerFactory("dimension", new PropertyEditorBasedFactory(DimensionEditor))
-            registerFactory("insets", new PropertyEditorBasedFactory(InsetsEditor))
-            registerFactory("point", new PropertyEditorBasedFactory(PointEditor))
-            registerFactory("locale", new PropertyEditorBasedFactory(LocaleEditor, modifyMap: {attr ->
+            registerFactory("Dimension", new PropertyEditorBasedFactory(DimensionEditor))
+            registerFactory("Insets", new PropertyEditorBasedFactory(InsetsEditor))
+            registerFactory("Point", new PropertyEditorBasedFactory(PointEditor))
+            registerFactory("Locale", new PropertyEditorBasedFactory(LocaleEditor, modifyMap: {attr ->
                 attr.locale
             }))
-            registerFactory("rectangle", new PropertyEditorBasedFactory(RectangleEditor))
-            registerFactory("color", new PropertyEditorBasedFactory(ColorEditor))
-            registerFactory("font", new PropertyEditorBasedFactory(FontEditor))
-            registerFactory("image", new PropertyEditorBasedFactory(ImageEditor))
-            registerFactory("icon", new PropertyEditorBasedFactory(IconEditor))
-            registerFactory("gradientPaint", new PropertyEditorBasedFactory(GradientPaintEditor))
-            registerFactory("linearGradientPaint", new PropertyEditorBasedFactory(LinearGradientPaintEditor))
-            registerFactory("radialGradientPaint", new PropertyEditorBasedFactory(RadialGradientPaintEditor))
-            registerFactory("texturePaint", new PropertyEditorBasedFactory(TexturePaintEditor))
+            registerFactory("Rectangle", new PropertyEditorBasedFactory(RectangleEditor))
+            registerFactory("Color", new PropertyEditorBasedFactory(ColorEditor))
+            registerFactory("Font", new PropertyEditorBasedFactory(FontEditor))
+            registerFactory("Image", new PropertyEditorBasedFactory(ImageEditor))
+            registerFactory("Icon", new PropertyEditorBasedFactory(IconEditor))
+            registerFactory("GradientPaint", new PropertyEditorBasedFactory(GradientPaintEditor))
+            registerFactory("LinearGradientPaint", new PropertyEditorBasedFactory(LinearGradientPaintEditor))
+            registerFactory("RadialGradientPaint", new PropertyEditorBasedFactory(RadialGradientPaintEditor))
+            registerFactory("TexturePaint", new PropertyEditorBasedFactory(TexturePaintEditor))
 		}
 	}
 

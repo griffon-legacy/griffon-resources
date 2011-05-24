@@ -52,6 +52,7 @@ class ConfigSlurper {
     String environment
     private envMode = false
     private Map bindingVars
+    def delegate
 
     ConfigSlurper() { }
 
@@ -161,7 +162,7 @@ class ConfigSlurper {
     ConfigObject parse(Script script, URL location) {
         def config = location ? new ConfigObject(location) : new ConfigObject()
         GroovySystem.metaClassRegistry.removeMetaClass(script.class)
-        def mc = script.class.metaClass
+        def mc = script.metaClass
         def prefix = ""
         LinkedList stack = new LinkedList()
         stack << [config:config,scope:[:]]
@@ -193,6 +194,7 @@ class ConfigSlurper {
         mc.getProperty = getPropertyClosure
         mc.invokeMethod = { String name, args ->
             def result
+            result
             if(args.length == 1 && args[0] instanceof Closure) {
                 if(name == ENV_METHOD) {
                     try {
@@ -239,10 +241,13 @@ class ConfigSlurper {
                 if(mm) {
                     result = mm.invoke(delegate, args)
                 } else {
-                    throw new MissingMethodException(name, getClass(), args)
+                    if(this.delegate) {
+                        result = this.delegate.invokeMethod(name, args)
+                    } else {
+                        throw new MissingMethodException(name, getClass(), args)
+                    }
                 }
             }
-            result
         }
         script.metaClass = mc
                                                       mc

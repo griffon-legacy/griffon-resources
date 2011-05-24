@@ -8,6 +8,7 @@ import java.security.PrivilegedActionException
 import java.security.PrivilegedExceptionAction
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanWrapperImpl
+import griffon.core.GriffonApplication
 
 /*
  * Copyright 2010 the original author or authors.
@@ -62,19 +63,19 @@ class ResourceManager implements Cloneable {
     ObservableMap binding = [:] as ObservableMap
     org.slf4j.Logger log = LoggerFactory.getLogger(this.getClass())
 
-    ResourceBuilder builder = new ResourceBuilder()
-
     private ConfigSlurper slurper = new ConfigSlurper()
     private ConfigObject config
+    GriffonApplication app
+    def builder
 
     private PropertyChangeListener configChanged = {evt ->
         config = null
     } as PropertyChangeListener
 
-    ResourceManager() {
+    ResourceManager(GriffonApplication app = null) {
+        this.app = app
         binding.rm = this
-        binding.builder = builder
-        binding.r = builder
+        binding.app = app
         addPropertyChangeListener(configChanged)
         customSuffixes.addPropertyChangeListener(configChanged)
         basenames.addPropertyChangeListener(configChanged)
@@ -84,8 +85,8 @@ class ResourceManager implements Cloneable {
 
     @Override
     Object clone() {
-        def newInstance = new ResourceManager(customSuffixes: customSuffixes, basenames: basenames, basedirs: basedirs,
-                locale: locale, loader: loader, extension: extension, baseclass: baseclass, binding: binding, log: log, builder: builder)
+        def newInstance = new ResourceManager(app: app, customSuffixes: customSuffixes, basenames: basenames, basedirs: basedirs,
+                locale: locale, loader: loader, extension: extension, baseclass: baseclass, binding: binding, log: log)
         newInstance.binding.rm = newInstance
         newInstance
     }
@@ -277,6 +278,11 @@ class ResourceManager implements Cloneable {
     }
 
     protected ConfigObject getConfigObject(String target) {
+        // lazily fetching the first builder
+        if(!builder) {
+            builder = app?.builders?.getAt(0) ?: new ResourceBuilder()
+            slurper.delegate = builder
+        }
         // Load by class if it exists
         ConfigObject object
         if (baseclass) {
