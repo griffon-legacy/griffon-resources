@@ -1,3 +1,19 @@
+/*
+ * Copyright 2010 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package resourcemanager
 
 import griffon.resourcemanager.ResourceManager
@@ -8,6 +24,9 @@ import java.beans.PropertyChangeListener
 import java.awt.*
 import java.awt.MultipleGradientPaint.CycleMethod
 
+/**
+ * @author Alexander Klein
+ */
 class ResourceManagerTests extends GriffonUnitTestCase {
     @Bindable
     String property1
@@ -30,12 +49,10 @@ class ResourceManagerTests extends GriffonUnitTestCase {
         assert rm.customSuffixes == []
         assert rm.basenames == []
 
-        rm = new ResourceManager(locale: Locale.GERMANY, customSuffixes: ['custom'], basenames: ['messages'],
-                basedirs: ['resources', 'i18n'])
+        rm = new ResourceManager(locale: Locale.GERMANY, customSuffixes: ['custom'], basenames: ['messages'])
         assert rm.locale.toString() == 'de_DE'
         assert rm.customSuffixes == ['custom']
         assert rm.basenames == ['messages']
-        assert rm.basedirs == ['resources', 'i18n']
     }
 
     void testGetAt() {
@@ -49,8 +66,7 @@ class ResourceManagerTests extends GriffonUnitTestCase {
 
     void testGetProperty() {
         def rm = new ResourceManager(basenames: ['messages'], customSuffixes: ['_custom'])
-        def url = new File('test/resourceBase').toURL()
-        rm.loader = new URLClassLoader([url] as URL[], resourcemanager.ResourceManagerTests.getClassLoader())
+        rm.loader = new URLClassLoader([new File('test/resourceBase/resources').toURL(), new File('test/resourceBase').toURL()] as URL[], resourcemanager.ResourceManagerTests.getClassLoader())
         rm = rm[this.getClass()]
         assert rm.test.key1 == 'resourcemanager/resources/ResourceManagerTests_custom_de.groovy'
         assert rm.test.key2 == 'resourcemanager/resources/ResourceManagerTests_custom_de.properties'
@@ -68,30 +84,23 @@ class ResourceManagerTests extends GriffonUnitTestCase {
         assert rm.test.key14 == 'resources/messages_de.properties'
         assert rm.test.key15 == 'resources/messages.groovy'
         assert rm.test.key16 == 'resources/messages.properties'
-        assert rm.test.key17 == 'i18n/messages_custom_de.groovy'
-        assert rm.test.key18 == 'i18n/messages_custom_de.properties'
-        assert rm.test.key19 == 'i18n/messages_custom.groovy'
-        assert rm.test.key20 == 'i18n/messages_custom.properties'
-        assert rm.test.key21 == 'i18n/messages_de.groovy'
-        assert rm.test.key22 == 'i18n/messages_de.properties'
-        assert rm.test.key23 == 'i18n/messages.groovy'
-        assert rm.test.key24 == 'i18n/messages.properties'
 
         assert rm.objects.boolean
         assert rm.objects.int == 123
+
         assert rm.objects.list == [1, 2, 3]
         assert rm.objects.map == [key: 'value']
 
         assert rm.key() == 'abc'
-        assert rm.test.key24() == 'i18n/messages.properties'
+        assert rm.test.key16() == 'resources/messages.properties'
         assert rm.test.fill1(1, 2) == '[ 1, 2 ]'
         assert rm.test.fill1([1, 2]) == '[ 1, 2 ]'
         assert rm.test.fill2(a: 1, b: 2) == '[ 1, 2, #a ]'
         assert rm.test.fill2([a: 1, b: 2]) == '[ 1, 2, #a ]'
         assert rm.test.fill3(1) == '[ 1 ]'
 
-        assert rm.test.dynamic(1,2) == '1 2'
-        assert rm.test.dynamic(*[1, 2]) == '1 2'
+        assert rm.test.dynamic(1, 2) == '1 2'
+        assert rm.test.dynamic(* [1, 2]) == '1 2'
 
         assert rm.callTest == 'Test'
     }
@@ -210,136 +219,136 @@ class ResourceManagerTests extends GriffonUnitTestCase {
         assert rm.icon8.width == 10
         assert rm.icon8.height == 20
 
-        assert rm.gradient1.point1 == new Point(10,20)
-        assert rm.gradient1.point2 == new Point(100,200)
+        assert rm.gradient1.point1 == new Point(10, 20)
+        assert rm.gradient1.point2 == new Point(100, 200)
         assert rm.gradient1.color1 == Color.WHITE
         assert rm.gradient1.color2 == new Color(0xAA, 0x55, 0x00)
-        assert rm.gradient2.point1 == new Point(10,20)
-        assert rm.gradient2.point2 == new Point(100,200)
+        assert rm.gradient2.point1 == new Point(10, 20)
+        assert rm.gradient2.point2 == new Point(100, 200)
         assert rm.gradient2.color1 == Color.WHITE
         assert rm.gradient2.color2 == new Color(0xAA, 0x55, 0x00)
-        assert rm.gradient3.point1 == new Point(10,20)
-        assert rm.gradient3.point2 == new Point(100,200)
+        assert rm.gradient3.point1 == new Point(10, 20)
+        assert rm.gradient3.point2 == new Point(100, 200)
         assert rm.gradient3.color1 == Color.WHITE
         assert rm.gradient3.color2 == new Color(0xAA, 0x55, 0x00)
-        assert rm.gradient4.point1 == new Point(10,20)
-        assert rm.gradient4.point2 == new Point(100,200)
+        assert rm.gradient4.point1 == new Point(10, 20)
+        assert rm.gradient4.point2 == new Point(100, 200)
         assert rm.gradient4.color1 == Color.WHITE
         assert rm.gradient4.color2 == new Color(0xAA, 0x55, 0x00)
-        assert rm.gradient5.point1 == new Point(10,20)
-        assert rm.gradient5.point2 == new Point(100,200)
+        assert rm.gradient5.point1 == new Point(10, 20)
+        assert rm.gradient5.point2 == new Point(100, 200)
         assert rm.gradient5.color1 == Color.WHITE
         assert rm.gradient5.color2 == new Color(0xAA, 0x55, 0x00)
 
-        assert rm.linear1.startPoint == new Point(10,20)
-        assert rm.linear1.endPoint == new Point(100,200)
+        assert rm.linear1.startPoint == new Point(10, 20)
+        assert rm.linear1.endPoint == new Point(100, 200)
         assert rm.linear1.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.linear1.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.linear1.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.linear1.cycleMethod == CycleMethod.REPEAT
-        assert rm.linear2.startPoint == new Point(10,20)
-        assert rm.linear2.endPoint == new Point(100,200)
+        assert rm.linear2.startPoint == new Point(10, 20)
+        assert rm.linear2.endPoint == new Point(100, 200)
         assert rm.linear2.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.linear2.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.linear2.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.linear2.cycleMethod == CycleMethod.REPEAT
-        assert rm.linear3.startPoint == new Point(10,20)
-        assert rm.linear3.endPoint == new Point(100,200)
+        assert rm.linear3.startPoint == new Point(10, 20)
+        assert rm.linear3.endPoint == new Point(100, 200)
         assert rm.linear3.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.linear3.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.linear3.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.linear3.cycleMethod == CycleMethod.REPEAT
-        assert rm.linear4.startPoint == new Point(10,20)
-        assert rm.linear4.endPoint == new Point(100,200)
+        assert rm.linear4.startPoint == new Point(10, 20)
+        assert rm.linear4.endPoint == new Point(100, 200)
         assert rm.linear4.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.linear4.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.linear4.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.linear4.cycleMethod == CycleMethod.REPEAT
-        assert rm.linear5.startPoint == new Point(10,20)
-        assert rm.linear5.endPoint == new Point(100,200)
+        assert rm.linear5.startPoint == new Point(10, 20)
+        assert rm.linear5.endPoint == new Point(100, 200)
         assert rm.linear5.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.linear5.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.linear5.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.linear5.cycleMethod == CycleMethod.REPEAT
-        assert rm.linear6.startPoint == new Point(10,20)
-        assert rm.linear6.endPoint == new Point(100,200)
+        assert rm.linear6.startPoint == new Point(10, 20)
+        assert rm.linear6.endPoint == new Point(100, 200)
         assert rm.linear6.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.linear6.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.linear6.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.linear6.cycleMethod == CycleMethod.REPEAT
 
-        assert rm.radial1.centerPoint == new Point(100,200)
+        assert rm.radial1.centerPoint == new Point(100, 200)
         assert rm.radial1.radius == 50
         assert rm.radial1.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial1.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial1.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial1.cycleMethod == CycleMethod.REPEAT
-        assert rm.radial2.centerPoint == new Point(100,200)
+        assert rm.radial2.centerPoint == new Point(100, 200)
         assert rm.radial2.radius == 50
         assert rm.radial2.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial2.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial2.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial2.cycleMethod == CycleMethod.REPEAT
-        assert rm.radial3.centerPoint == new Point(100,200)
+        assert rm.radial3.centerPoint == new Point(100, 200)
         assert rm.radial3.radius == 50
         assert rm.radial3.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial3.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial3.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial3.cycleMethod == CycleMethod.REPEAT
-        assert rm.radial4.centerPoint == new Point(100,200)
+        assert rm.radial4.centerPoint == new Point(100, 200)
         assert rm.radial4.radius == 50
         assert rm.radial4.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial4.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial4.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial4.cycleMethod == CycleMethod.REPEAT
-        assert rm.radial5.centerPoint == new Point(100,200)
+        assert rm.radial5.centerPoint == new Point(100, 200)
         assert rm.radial5.radius == 50
         assert rm.radial5.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial5.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial5.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial5.cycleMethod == CycleMethod.REPEAT
 
-        assert rm.radial6.centerPoint == new Point(100,200)
-        assert rm.radial6.focusPoint == new Point(10,20)
+        assert rm.radial6.centerPoint == new Point(100, 200)
+        assert rm.radial6.focusPoint == new Point(10, 20)
         assert rm.radial6.radius == 50
         assert rm.radial6.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial6.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial6.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial6.cycleMethod == CycleMethod.REPEAT
-        assert rm.radial7.centerPoint == new Point(100,200)
-        assert rm.radial7.focusPoint == new Point(10,20)
+        assert rm.radial7.centerPoint == new Point(100, 200)
+        assert rm.radial7.focusPoint == new Point(10, 20)
         assert rm.radial7.radius == 50
         assert rm.radial7.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial7.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial7.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial7.cycleMethod == CycleMethod.REPEAT
-        assert rm.radial8.centerPoint == new Point(100,200)
-        assert rm.radial8.focusPoint == new Point(10,20)
+        assert rm.radial8.centerPoint == new Point(100, 200)
+        assert rm.radial8.focusPoint == new Point(10, 20)
         assert rm.radial8.radius == 50
         assert rm.radial8.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial8.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial8.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial8.cycleMethod == CycleMethod.REPEAT
-        assert rm.radial9.centerPoint == new Point(100,200)
-        assert rm.radial9.focusPoint == new Point(10,20)
+        assert rm.radial9.centerPoint == new Point(100, 200)
+        assert rm.radial9.focusPoint == new Point(10, 20)
         assert rm.radial9.radius == 50
         assert rm.radial9.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial9.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial9.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial9.cycleMethod == CycleMethod.REPEAT
-        assert rm.radial10.centerPoint == new Point(100,200)
-        assert rm.radial10.focusPoint == new Point(10,20)
+        assert rm.radial10.centerPoint == new Point(100, 200)
+        assert rm.radial10.focusPoint == new Point(10, 20)
         assert rm.radial10.radius == 50
         assert rm.radial10.fractions == [0.0, 0.5, 1.0] as float[]
-        assert rm.radial10.colors == [Color.WHITE, new Color(0xAA ,0xAA ,0xAA), Color.BLACK] as Color[]
+        assert rm.radial10.colors == [Color.WHITE, new Color(0xAA, 0xAA, 0xAA), Color.BLACK] as Color[]
         assert rm.radial10.cycleMethod == CycleMethod.REPEAT
 
         assert rm.texture1.image.width == 10
         assert rm.texture1.image.height == 20
-        assert rm.texture1.anchorRect ==  new Rectangle(10, 20, 50, 100)
+        assert rm.texture1.anchorRect == new Rectangle(10, 20, 50, 100)
         assert rm.texture2.image.width == 10
         assert rm.texture2.image.height == 20
-        assert rm.texture2.anchorRect ==  new Rectangle(10, 20, 50, 100)
+        assert rm.texture2.anchorRect == new Rectangle(10, 20, 50, 100)
         assert rm.texture3.image.width == 10
         assert rm.texture3.image.height == 20
-        assert rm.texture3.anchorRect ==  new Rectangle(10, 20, 50, 100)
+        assert rm.texture3.anchorRect == new Rectangle(10, 20, 50, 100)
         assert rm.texture4.image.width == 10
         assert rm.texture4.image.height == 20
-        assert rm.texture4.anchorRect ==  new Rectangle(10, 20, 50, 100)
+        assert rm.texture4.anchorRect == new Rectangle(10, 20, 50, 100)
         assert rm.texture5.image.width == 10
         assert rm.texture5.image.height == 20
-        assert rm.texture5.anchorRect ==  new Rectangle(10, 20, 50, 100)
+        assert rm.texture5.anchorRect == new Rectangle(10, 20, 50, 100)
         assert rm.texture6.image.width == 10
         assert rm.texture6.image.height == 20
-        assert rm.texture6.anchorRect ==  new Rectangle(10, 20, 50, 100)
+        assert rm.texture6.anchorRect == new Rectangle(10, 20, 50, 100)
         assert rm.texture6.image.width == 10
         assert rm.texture6.image.height == 20
-        assert rm.texture6.anchorRect ==  new Rectangle(10, 20, 50, 100)
+        assert rm.texture6.anchorRect == new Rectangle(10, 20, 50, 100)
     }
 
     void testInjectProperty() {

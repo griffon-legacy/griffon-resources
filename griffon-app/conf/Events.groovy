@@ -2,7 +2,12 @@ import javax.swing.Icon
 import griffon.resourcemanager.*
 import java.awt.*
 
-onBootstrapStart = { app ->
+onLoadAddonEnd = { name, addon, app ->
+    if(name != 'ResourcesGriffonAddon')
+        return
+
+    // TODO: Remove
+    println "--------------------ResourcesGriffonAddon---------------------"
 /*
 DefaultEditors:
 

@@ -1,15 +1,3 @@
-package griffon.resourcemanager
-
-import groovy.beans.Bindable
-import java.beans.PropertyChangeListener
-import java.beans.PropertyEditor
-import java.security.AccessController
-import java.security.PrivilegedActionException
-import java.security.PrivilegedExceptionAction
-import org.slf4j.LoggerFactory
-import org.springframework.beans.BeanWrapperImpl
-import griffon.core.GriffonApplication
-
 /*
  * Copyright 2010 the original author or authors.
  *
@@ -25,11 +13,21 @@ import griffon.core.GriffonApplication
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package griffon.resourcemanager
+
+import griffon.core.GriffonApplication
+import groovy.beans.Bindable
+import java.beans.PropertyChangeListener
+import java.beans.PropertyEditor
+import java.security.AccessController
+import java.security.PrivilegedActionException
+import java.security.PrivilegedExceptionAction
+import org.slf4j.LoggerFactory
+import org.springframework.beans.BeanWrapperImpl
 
 /**
  * @author Alexander Klein
  */
-
 class ResourceManager implements Cloneable {
     static final Map<Class, Class> WRAPPERS = [:]
     private static final BeanWrapperImpl registry = new BeanWrapperImpl(true)
@@ -50,8 +48,6 @@ class ResourceManager implements Cloneable {
     ObservableList customSuffixes = [] as ObservableList
     @Bindable
     ObservableList basenames = [] as ObservableList
-    @Bindable
-    ObservableList basedirs = ['resources', 'i18n'] as ObservableList
     @Bindable
     Locale locale = Locale.default
     @Bindable
@@ -79,13 +75,12 @@ class ResourceManager implements Cloneable {
         addPropertyChangeListener(configChanged)
         customSuffixes.addPropertyChangeListener(configChanged)
         basenames.addPropertyChangeListener(configChanged)
-        basedirs.addPropertyChangeListener(configChanged)
         binding.addPropertyChangeListener(configChanged)
     }
 
     @Override
     Object clone() {
-        def newInstance = new ResourceManager(app: app, customSuffixes: customSuffixes, basenames: basenames, basedirs: basedirs,
+        def newInstance = new ResourceManager(app: app, customSuffixes: customSuffixes, basenames: basenames,
                 locale: locale, loader: loader, extension: extension, baseclass: baseclass, binding: binding, log: log)
         newInstance.binding.rm = newInstance
         newInstance
@@ -239,28 +234,27 @@ class ResourceManager implements Cloneable {
     ConfigObject getConfig() {
         if (!config) {
             ConfigObject temp
-            def dirs = []
-            dirs.addAll(basedirs.reverse())
-            dirs.each { base ->
                 basenames.reverse().each {name ->
-                    temp = processForName(name, base, temp, customSuffixes.reverse())
+                    temp = processForName(name, '', temp, customSuffixes.reverse())
                 }
-            }
-            temp = processForName(baseclass.simpleName, "${baseclass.package.name}.resources", temp, customSuffixes.reverse())
+            if(baseclass)
+                temp = processForName(baseclass.simpleName, "${baseclass.package.name}.resources", temp, customSuffixes.reverse())
             config = temp
         }
         return config
     }
 
     private def processForName(String name, String base, ConfigObject config, List customSuffixes) {
+        if(base)
+            base = "$base."
         getCandidateLocales().each { loc ->
-            def cfg = getConfigObject("$base.$name$loc")
+            def cfg = getConfigObject("$base$name$loc")
             if (cfg)
                 config = merge(config, cfg)
         }
         customSuffixes.each {suffix ->
             getCandidateLocales().each { loc ->
-                def cfg = getConfigObject("$base.$name$suffix$loc")
+                def cfg = getConfigObject("$base$name$suffix$loc")
                 if (cfg)
                     config = merge(config, cfg)
             }
@@ -319,6 +313,7 @@ class ResourceManager implements Cloneable {
             else
                 object = slurper.parse(prop)
         }
+        return object
     }
 
     protected InputStream openPrivilegedInputStream(final URL url) throws IOException {
@@ -373,6 +368,10 @@ class ResourceManager implements Cloneable {
         return rm
     }
 
+    def getAt(Object obj) {
+        return getAt(obj.getClass())
+    }
+
     static Locale getLocaleFromString(String localeString) {
         if (localeString == null)
             return Locale.default;
@@ -396,15 +395,6 @@ class ResourceManager implements Cloneable {
     void setBasenames(Collection basenames) {
         this.basenames.clear()
         this.basenames.addAll(basenames)
-    }
-
-    /**
-     * The first one in the list has the highest priority
-     * @param basedirs
-     */
-    void setBasedirs(Collection basedirs) {
-        this.basedirs.clear()
-        this.basedirs.addAll(basedirs)
     }
 
     void injectProperties(def bean, Class cls = bean.getClass(), String prefix = 'injections') {

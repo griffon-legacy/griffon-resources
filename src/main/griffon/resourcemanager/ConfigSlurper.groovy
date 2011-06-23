@@ -194,14 +194,13 @@ class ConfigSlurper {
         mc.getProperty = getPropertyClosure
         mc.invokeMethod = { String name, args ->
             def result
-            result
             if(args.length == 1 && args[0] instanceof Closure) {
                 if(name == ENV_METHOD) {
                     try {
                         envMode = true
                         args[0].call()
                     } finally {
-                        envMode = false                                     invokeMethod
+                        envMode = false
                     }
                 } else if (envMode) {
                     if(name == environment) {
@@ -247,10 +246,11 @@ class ConfigSlurper {
                         throw new MissingMethodException(name, getClass(), args)
                     }
                 }
+                result
             }
         }
         script.metaClass = mc
-                                                      mc
+
         def setProperty = { String name, value ->
             assignName.call(prefix+name, value)
         }

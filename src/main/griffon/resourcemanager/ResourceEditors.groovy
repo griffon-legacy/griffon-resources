@@ -1,16 +1,3 @@
-package griffon.resourcemanager
-
-import java.awt.MultipleGradientPaint.CycleMethod
-import java.awt.font.TextAttribute
-import java.awt.geom.Rectangle2D
-import java.awt.image.BufferedImage
-import java.awt.image.ImageObserver
-import java.beans.PropertyEditorSupport
-import javax.imageio.ImageIO
-import javax.imageio.stream.ImageInputStream
-import javax.swing.ImageIcon
-import java.awt.*
-
 /*
  * Copyright 2010 the original author or authors.
  *
@@ -27,6 +14,22 @@ import java.awt.*
  * limitations under the License.
  */
 
+package griffon.resourcemanager
+
+import java.awt.MultipleGradientPaint.CycleMethod
+import java.awt.font.TextAttribute
+import java.awt.geom.Rectangle2D
+import java.awt.image.BufferedImage
+import java.awt.image.ImageObserver
+import java.beans.PropertyEditorSupport
+import javax.imageio.ImageIO
+import javax.imageio.stream.ImageInputStream
+import javax.swing.ImageIcon
+import java.awt.*
+
+/**
+ * @author Alexander Klein
+ */
 class ToStringEditor extends PropertyEditorSupport {
     @Override
     void setValue(Object o) throws IllegalArgumentException {
@@ -39,6 +42,9 @@ class ToStringEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class ColorEditor extends PropertyEditorSupport {
     @Override
     void setAsText(String text) throws IllegalArgumentException {
@@ -89,6 +95,9 @@ class ColorEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class DimensionEditor extends PropertyEditorSupport {
     @Override
     void setAsText(String text) throws IllegalArgumentException {
@@ -113,6 +122,9 @@ class DimensionEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class InsetsEditor extends PropertyEditorSupport {
     @Override
     void setAsText(String text) throws IllegalArgumentException {
@@ -139,6 +151,9 @@ class InsetsEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class PointEditor extends PropertyEditorSupport {
     @Override
     void setAsText(String text) throws IllegalArgumentException {
@@ -163,6 +178,9 @@ class PointEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class RectangleEditor extends PropertyEditorSupport {
     @Override
     void setAsText(String text) throws IllegalArgumentException {
@@ -198,6 +216,9 @@ class RectangleEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class FontEditor extends PropertyEditorSupport {
     private GroovyShell shell = new GroovyShell(new TolerantBinding())
 
@@ -275,7 +296,7 @@ class FontEditor extends PropertyEditorSupport {
             else if (name instanceof URI)
                 source = name.toURL()
             else if (name instanceof String)
-                source = name.toURL()
+                source = this.getClass().classLoader.getResource(name) ?: name.toURL()
         } catch (MalformedURLException e) {}
         if (source) {
             InputStream stream = source.newInputStream()
@@ -289,6 +310,9 @@ class FontEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class ImageEditor extends PropertyEditorSupport {
     @Override
     void setAsText(String text) throws IllegalArgumentException {
@@ -301,9 +325,10 @@ class ImageEditor extends PropertyEditorSupport {
             if (o instanceof Map)
                 o = o.source ?: o.src
             def img
-            if (o instanceof String || o instanceof GString)
-                img = ImageIO.read(o.toURL())
-            else if (o instanceof File)
+            if (o instanceof String || o instanceof GString) {
+                def url = this.getClass().classLoader.getResource(o) ?: o.toURL()
+                img = ImageIO.read(url)
+            } else if (o instanceof File)
                 img = ImageIO.read(o)
             else if (o instanceof URL)
                 img = ImageIO.read(o)
@@ -323,6 +348,9 @@ class ImageEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class IconEditor extends PropertyEditorSupport {
     @Override
     void setAsText(String text) throws IllegalArgumentException {
@@ -343,7 +371,7 @@ class IconEditor extends PropertyEditorSupport {
             }
             if (o instanceof String || o instanceof GString) {
                 def parts = o.split(/\s*,\s*/)
-                source = parts[0].toURL()
+                source = this.getClass().classLoader.getResource(parts[0]) ?: parts[0].toURL()
                 description = parts.size() > 1 ? parts[1] : null
             } else if (o instanceof File)
                 source = o
@@ -377,6 +405,9 @@ class IconEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class GradientPaintEditor extends PropertyEditorSupport {
     private GroovyShell shell = new GroovyShell(new TolerantBinding())
 
@@ -435,6 +466,9 @@ class GradientPaintEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class LinearGradientPaintEditor extends PropertyEditorSupport {
     private GroovyShell shell = new GroovyShell(new TolerantBinding())
 
@@ -489,6 +523,9 @@ class LinearGradientPaintEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class RadialGradientPaintEditor extends PropertyEditorSupport {
     private GroovyShell shell = new GroovyShell(new TolerantBinding())
     private ColorEditor colorEditor = new ColorEditor()
@@ -565,6 +602,9 @@ class RadialGradientPaintEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class TexturePaintEditor extends PropertyEditorSupport {
     private GroovyShell shell = new GroovyShell(new TolerantBinding())
 
@@ -650,6 +690,9 @@ class TexturePaintEditor extends PropertyEditorSupport {
     }
 }
 
+/**
+ * @author Alexander Klein
+ */
 class TolerantBinding extends Binding {
     public Object getVariable(String name) {
         try {

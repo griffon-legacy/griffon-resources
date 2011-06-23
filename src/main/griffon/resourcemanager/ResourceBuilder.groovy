@@ -1,43 +1,61 @@
+/*
+ * Copyright 2010 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package griffon.resourcemanager
 
-import org.springframework.beans.propertyeditors.URLEditor
-import org.springframework.beans.propertyeditors.URIEditor
 import org.springframework.beans.propertyeditors.LocaleEditor
+import org.springframework.beans.propertyeditors.URIEditor
+import org.springframework.beans.propertyeditors.URLEditor
 
 /**
- * Created by IntelliJ IDEA.
- * User: sascha
- * Date: 19.05.11
- * Time: 17:14
- * To change this template use File | Settings | File Templates.
+ * @author Alexander Klein
  */
 public class ResourceBuilder extends FactoryBuilderSupport {
-		public ResourceBuilder(boolean init = true) {
-			super(init)
-		}
+    public ResourceBuilder() {
+        super(true)
+    }
 
-		def registerFactories() {
-            registerFactory("Url", new PropertyEditorBasedFactory(URLEditor, modifyMap: {attr ->
+    static factoryMap = [
+            url: new PropertyEditorBasedFactory(URLEditor, modifyMap: {attr ->
                 attr.source ?: attr.url ?: attr.src
-            }))
-            registerFactory("Uri", new PropertyEditorBasedFactory(URIEditor, modifyMap: {attr ->
+            }),
+            uri: new PropertyEditorBasedFactory(URIEditor, modifyMap: {attr ->
                 attr.source ?: attr.uri ?: attr.src
-            }))
-            registerFactory("Dimension", new PropertyEditorBasedFactory(DimensionEditor))
-            registerFactory("Insets", new PropertyEditorBasedFactory(InsetsEditor))
-            registerFactory("Point", new PropertyEditorBasedFactory(PointEditor))
-            registerFactory("Locale", new PropertyEditorBasedFactory(LocaleEditor, modifyMap: {attr ->
+            }),
+            dimension: new PropertyEditorBasedFactory(DimensionEditor),
+            insets: new PropertyEditorBasedFactory(InsetsEditor),
+            point: new PropertyEditorBasedFactory(PointEditor),
+            locale: new PropertyEditorBasedFactory(LocaleEditor, modifyMap: {attr ->
                 attr.locale
-            }))
-            registerFactory("Rectangle", new PropertyEditorBasedFactory(RectangleEditor))
-            registerFactory("Color", new PropertyEditorBasedFactory(ColorEditor))
-            registerFactory("Font", new PropertyEditorBasedFactory(FontEditor))
-            registerFactory("Image", new PropertyEditorBasedFactory(ImageEditor))
-            registerFactory("Icon", new PropertyEditorBasedFactory(IconEditor))
-            registerFactory("GradientPaint", new PropertyEditorBasedFactory(GradientPaintEditor))
-            registerFactory("LinearGradientPaint", new PropertyEditorBasedFactory(LinearGradientPaintEditor))
-            registerFactory("RadialGradientPaint", new PropertyEditorBasedFactory(RadialGradientPaintEditor))
-            registerFactory("TexturePaint", new PropertyEditorBasedFactory(TexturePaintEditor))
-		}
-	}
+            }),
+            rectangle: new PropertyEditorBasedFactory(RectangleEditor),
+            color: new PropertyEditorBasedFactory(ColorEditor),
+            font: new PropertyEditorBasedFactory(FontEditor),
+            image: new PropertyEditorBasedFactory(ImageEditor),
+            icon: new PropertyEditorBasedFactory(IconEditor),
+            gradientPaint: new PropertyEditorBasedFactory(GradientPaintEditor),
+            linearGradientPaint: new PropertyEditorBasedFactory(LinearGradientPaintEditor),
+            radialGradientPaint: new PropertyEditorBasedFactory(RadialGradientPaintEditor),
+            texturePaint: new PropertyEditorBasedFactory(TexturePaintEditor),
+    ]
+
+    def registerFactories() {
+        factoryMap.each {k,v ->
+            registerFactory k, v
+        }
+    }
+}
 

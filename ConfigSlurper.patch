@@ -1,0 +1,49 @@
+Index: src/main/groovy/util/ConfigSlurper.groovy
+===================================================================
+--- src/main/groovy/util/ConfigSlurper.groovy	(revision 73c83ed0903141099e1b90c8fc8e02f0832f00ff)
++++ src/main/groovy/util/ConfigSlurper.groovy	(revision )
+@@ -52,6 +52,7 @@
+     String environment
+     private envMode = false
+     private Map bindingVars
++    def delegate
+ 
+     ConfigSlurper() { }
+ 
+@@ -161,7 +162,7 @@
+     ConfigObject parse(Script script, URL location) {
+         def config = location ? new ConfigObject(location) : new ConfigObject()
+         GroovySystem.metaClassRegistry.removeMetaClass(script.class)
+-        def mc = script.class.metaClass
++        def mc = script.metaClass
+         def prefix = ""
+         LinkedList stack = new LinkedList()
+         stack << [config:config,scope:[:]]
+@@ -193,6 +194,7 @@
+         mc.getProperty = getPropertyClosure
+         mc.invokeMethod = { String name, args ->
+             def result
++            result
+             if(args.length == 1 && args[0] instanceof Closure) {
+                 if(name == ENV_METHOD) {
+                     try {
+@@ -239,11 +241,14 @@
+                 if(mm) {
+                     result = mm.invoke(delegate, args)
+                 } else {
++                    if(this.delegate) {
++                        result = this.delegate.invokeMethod(name, args)
++                    } else {
+-                    throw new MissingMethodException(name, getClass(), args)
+-                }
+-            }
++                        throw new MissingMethodException(name, getClass(), args)
++                    }
++                }
+-            result
+-        }
++            }
++        }
+         script.metaClass = mc
+                                                       mc
+         def setProperty = { String name, value ->

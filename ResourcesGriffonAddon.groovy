@@ -1,9 +1,26 @@
-import griffon.core.GriffonApplication
-import org.springframework.beans.propertyeditors.LocaleEditor
-import org.springframework.beans.propertyeditors.URIEditor
-import org.springframework.beans.propertyeditors.URLEditor
-import griffon.resourcemanager.*
+/*
+ * Copyright 2010 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+import griffon.core.GriffonApplication
+import griffon.resourcemanager.ResourceBuilder
+import griffon.resourcemanager.ResourceManager
+
+/**
+ * @author Alexander Klein
+ */
 class ResourcesGriffonAddon {
     private ResourceManager resourceManager
     private static final String DEFAULT_I18N_FILE = 'messages'
@@ -23,7 +40,6 @@ class ResourcesGriffonAddon {
         app.metaClass.rm = resourceManager
         resourceManager.basenames = basenames as ObservableList
         resourceManager.customSuffixes = (app.config?.resources?.customSuffixes ?: []) as ObservableList
-        resourceManager.basedirs = (app.config?.resources?.basedirs ?: ['resources', 'i18n']) as ObservableList
         resourceManager.locale = app.config?.resources?.locale ?: Locale.default
         resourceManager.loader = app.config?.resources?.loader ?: ResourceManager.classLoader
         resourceManager.extension = app.config?.resources?.extension ?: 'groovy'
@@ -63,30 +79,34 @@ class ResourcesGriffonAddon {
     //]
 
     // adds new factories to all builders
-    //def factories = [
-    //]
+    def factories = ResourceBuilder.factoryMap
 
     // adds application event handlers
     def events = [
             NewInstance: {Class cls, String type, Object instance ->
-                def rm = resourceManager[cls]
+                def rm = resourceManager[instance]
                 rm.binding.app = app
-                try {
-                    instance.setRm(rm)
-                } catch (MissingMethodException mme) {
+                if (instance instanceof Script) {
+                    instance.binding.variables.rm = rm
+                    instance.binding.variables.resourceManager = rm
+                } else {
                     try {
-                        instance.rm = rm
-                    } catch (MissingPropertyException mpe) {
-                        instance.metaClass.rm = rm
+                        instance.setRm(rm)
+                    } catch (MissingMethodException mme) {
+                        try {
+                            instance.rm = rm
+                        } catch (MissingPropertyException mpe) {
+                            instance.metaClass.rm = rm
+                        }
                     }
-                }
-                try {
-                    instance.setResourceManager(rm)
-                } catch (MissingMethodException mme) {
                     try {
-                        instance.resourceManager = rm
-                    } catch (MissingPropertyException mpe) {
-                        instance.metaClass.resourceManager = rm
+                        instance.setResourceManager(rm)
+                    } catch (MissingMethodException mme) {
+                        try {
+                            instance.resourceManager = rm
+                        } catch (MissingPropertyException mpe) {
+                            instance.metaClass.resourceManager = rm
+                        }
                     }
                 }
             }

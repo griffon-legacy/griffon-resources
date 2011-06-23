@@ -1,15 +1,3 @@
-package griffon.resourcemanager
-
-import java.awt.Dimension
-import java.awt.Insets
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.Color
-import org.springframework.beans.propertyeditors.LocaleEditor
-import org.springframework.beans.propertyeditors.URIEditor
-import org.springframework.beans.propertyeditors.URLEditor
-import java.beans.PropertyEditor
-
 /*
  * Copyright 2010 the original author or authors.
  *
@@ -25,6 +13,10 @@ import java.beans.PropertyEditor
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package griffon.resourcemanager
+
+import java.beans.PropertyEditor
 
 /**
  * @author Alexander Klein

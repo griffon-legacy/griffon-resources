@@ -29,7 +29,6 @@ builderConfig.each() { prefix, v ->
 if (addonIsSet1) {
     println 'Removing ResourcesGriffonAddon from Builder.groovy'
     builderConfigFile.text = builderConfigFile.text - "root.'ResourcesGriffonAddon'.addon=true\n"
-    builderConfigFile.text = builderConfigFile.text - "rsc.'griffon.resourcemanager.ResourceBuilder'.model = '*'\n"
-    builderConfigFile.text = builderConfigFile.text - "rsc.'griffon.resourcemanager.ResourceBuilder'.view = '*'\n"
-    builderConfigFile.text = builderConfigFile.text - "rsc.'griffon.resourcemanager.ResourceBuilder'.controller = '*'\n"
+    builderConfigFile.text = builderConfigFile.text - "root.'ResourcesGriffonAddon'.controller='*'\n"
+    builderConfigFile.text = builderConfigFile.text - "root.'ResourcesGriffonAddon'.model='*'\n"
 }
