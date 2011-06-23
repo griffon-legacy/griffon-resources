@@ -24,6 +24,8 @@ import java.security.PrivilegedActionException
 import java.security.PrivilegedExceptionAction
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanWrapperImpl
+import java.awt.Component
+import java.awt.Container
 
 /**
  * @author Alexander Klein
@@ -234,10 +236,10 @@ class ResourceManager implements Cloneable {
     ConfigObject getConfig() {
         if (!config) {
             ConfigObject temp
-                basenames.reverse().each {name ->
-                    temp = processForName(name, '', temp, customSuffixes.reverse())
-                }
-            if(baseclass)
+            basenames.reverse().each {name ->
+                temp = processForName(name, '', temp, customSuffixes.reverse())
+            }
+            if (baseclass)
                 temp = processForName(baseclass.simpleName, "${baseclass.package.name}.resources", temp, customSuffixes.reverse())
             config = temp
         }
@@ -245,7 +247,7 @@ class ResourceManager implements Cloneable {
     }
 
     private def processForName(String name, String base, ConfigObject config, List customSuffixes) {
-        if(base)
+        if (base)
             base = "$base."
         getCandidateLocales().each { loc ->
             def cfg = getConfigObject("$base$name$loc")
@@ -273,7 +275,7 @@ class ResourceManager implements Cloneable {
 
     protected ConfigObject getConfigObject(String target) {
         // lazily fetching the first builder
-        if(!builder) {
+        if (!builder) {
             builder = app?.builders?.getAt(0) ?: new ResourceBuilder()
             slurper.delegate = builder
         }
@@ -397,10 +399,8 @@ class ResourceManager implements Cloneable {
         this.basenames.addAll(basenames)
     }
 
-    void injectProperties(def bean, Class cls = bean.getClass(), String prefix = 'injections') {
-        ResourceManager rm = this[cls]
-        Map base = rm."$prefix".flatten([:])
-        def self = this
+    void inject(def bean, String prefix = 'injections') {
+        Map base = getProperty(prefix)?.flatten([:]) ?: [:]
         base.each { key, value ->
             try {
                 if (value instanceof Closure)
@@ -417,17 +417,42 @@ class ResourceManager implements Cloneable {
                                 value = registry.convertIfNecessary(value, type)
                         }
                         obj."$part" = value
+                    } else if (obj instanceof Container) {
+                        obj = componentFinder.call(obj, part)
+                        if (obj == null)
+                            throw new IllegalArgumentException("Component with name $part not found")
                     } else
                         obj = obj."$part"
                 }
             } catch (e) {
-                log.warn("Error injecting key [$key] into [$bean]", e)
+                log.error("Error injecting key [$key] into [$bean]", e)
             }
         }
     }
 
-    void injectComponents(def component) {
-
+    Closure componentFinder = { Container container, String name ->
+        def iter = container.iterator()
+        List<Container> children = []
+        while (iter.hasNext() || !children.isEmpty()) {
+            if (iter.hasNext()) {
+                def component = iter.next()
+                if (name == component.name)
+                    return component
+                if (component instanceof Container)
+                    children.addAll(component.components)
+            } else {
+                List nextLevel = []
+                for (Component child: children) {
+                    if (name == child.name)
+                        return child
+                    if (child instanceof Container)
+                        nextLevel.addAll(child.components)
+                }
+                iter = nextLevel.iterator()
+                children = []
+            }
+        }
+        return null
     }
 
     static void registerEditor(Class cls, PropertyEditor editor) {

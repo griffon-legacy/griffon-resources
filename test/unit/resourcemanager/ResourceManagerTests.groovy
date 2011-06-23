@@ -372,7 +372,8 @@ class ResourceManagerTests extends GriffonUnitTestCase {
         def rm = new ResourceManager(basenames: ['messages'], customSuffixes: ['_custom'])
         def url = new File('test/resourceBase').toURL()
         rm.loader = new URLClassLoader([url] as URL[], resourcemanager.ResourceManagerTests.getClassLoader())
-        rm.injectProperties(this)
+        rm = rm[this]
+        rm.inject(this)
 
         assert property1 == 'Value1'
         assert property2 == 2
@@ -381,7 +382,7 @@ class ResourceManagerTests extends GriffonUnitTestCase {
         assert url1 == new URL('http://www.google.de')
 
         def map = [property3: [:]]
-        rm.injectProperties(map, this.getClass())
+        rm.inject(map)
 
         assert map.property1 == 'Value1'
         assert map.property2 == '2' // No conversion b/c no target type
