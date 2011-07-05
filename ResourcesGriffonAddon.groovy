@@ -17,6 +17,7 @@
 import griffon.core.GriffonApplication
 import griffon.resourcemanager.ResourceBuilder
 import griffon.resourcemanager.ResourceManager
+import griffon.core.GriffonClass
 
 /**
  * @author Alexander Klein
@@ -83,30 +84,15 @@ class ResourcesGriffonAddon {
 
     // adds application event handlers
     def events = [
-            NewInstance: {Class cls, String type, Object instance ->
-                def rm = resourceManager[instance]
-                rm.binding.app = app
-                if (instance instanceof Script) {
-                    instance.binding.variables.rm = rm
-                    instance.binding.variables.resourceManager = rm
-                } else {
-                    try {
-                        instance.setRm(rm)
-                    } catch (MissingMethodException mme) {
-                        try {
-                            instance.rm = rm
-                        } catch (MissingPropertyException mpe) {
-                            instance.metaClass.rm = rm
-                        }
-                    }
-                    try {
-                        instance.setResourceManager(rm)
-                    } catch (MissingMethodException mme) {
-                        try {
-                            instance.resourceManager = rm
-                        } catch (MissingPropertyException mpe) {
-                            instance.metaClass.resourceManager = rm
-                        }
+            StartupStart: { app ->
+                app.mvcGroups.each { groupName, group ->
+                    group.each { k, v ->
+                        GriffonClass griffonClass = app.artifactManager.findGriffonClass(v)
+                        Class cls = griffonClass?.clazz ?: loadClass(app, v)
+                        MetaClass metaClass = griffonClass?.getMetaClass() ?: cls.getMetaClass()
+                        def rm = resourceManager[cls]
+                        metaClass.rm = rm
+                        metaClass.resourceManager = rm
                     }
                 }
             }

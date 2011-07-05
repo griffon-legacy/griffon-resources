@@ -24,8 +24,8 @@ import org.springframework.beans.propertyeditors.URLEditor
  * @author Alexander Klein
  */
 public class ResourceBuilder extends FactoryBuilderSupport {
-    public ResourceBuilder() {
-        super(true)
+    public ResourceBuilder(boolean init = true) {
+        super(init)
     }
 
     static factoryMap = [
