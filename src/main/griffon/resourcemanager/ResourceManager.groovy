@@ -49,6 +49,8 @@ class ResourceManager implements Cloneable {
     @Bindable
     ObservableList customSuffixes = [] as ObservableList
     @Bindable
+    String resourceSuffix = 'Resources'
+    @Bindable
     ObservableList basenames = [] as ObservableList
     @Bindable
     Locale locale = Locale.default
@@ -82,7 +84,7 @@ class ResourceManager implements Cloneable {
 
     @Override
     Object clone() {
-        def newInstance = new ResourceManager(app: app, customSuffixes: customSuffixes, basenames: basenames,
+        def newInstance = new ResourceManager(app: app, customSuffixes: customSuffixes, resourceSuffix: resourceSuffix, basenames: basenames,
                 locale: locale, loader: loader, extension: extension, baseclass: baseclass, binding: binding, log: log)
         newInstance.binding.rm = newInstance
         newInstance
@@ -240,7 +242,7 @@ class ResourceManager implements Cloneable {
                 temp = processForName(name, '', temp, customSuffixes.reverse())
             }
             if (baseclass)
-                temp = processForName(baseclass.simpleName, "${baseclass.package.name}.resources", temp, customSuffixes.reverse())
+                temp = processForName("$baseclass.simpleName$resourceSuffix", baseclass.package.name, temp, customSuffixes.reverse())
             config = temp
         }
         return config

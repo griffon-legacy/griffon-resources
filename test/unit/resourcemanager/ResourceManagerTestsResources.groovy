@@ -1,4 +1,4 @@
-package resourcemanager.resources
+package resourcemanager
 
 import java.awt.Point
 import java.awt.Dimension
@@ -92,7 +92,7 @@ image2 = image(this.getClass().getResource('testImage.png'))
 image3 = image(this.getClass().getResource('testImage.png').toURI())
 image4 = image(this.getClass().getResource('testImage.png').newInputStream())
 image5 = image(this.getClass().getResource('testImage.png').getBytes())
-image6 = image(new File('test/unit/resourcemanager/resources/testImage.png'))
+image6 = image(new File('test/unit/resourcemanager/testImage.png'))
 image7 = image(source: this.getClass().getResource('testImage.png'))
 image8 = image(src: this.getClass().getResource('testImage.png').toExternalForm())
 
@@ -101,7 +101,7 @@ icon2 = icon(this.getClass().getResource('testImage.png'))
 icon3 = icon(this.getClass().getResource('testImage.png').toURI())
 icon4 = icon(this.getClass().getResource('testImage.png').newInputStream())
 icon5 = icon(this.getClass().getResource('testImage.png').getBytes())
-icon6 = icon(new File('test/unit/resourcemanager/resources/testImage.png'))
+icon6 = icon(new File('test/unit/resourcemanager/testImage.png'))
 icon7 = icon(source: this.getClass().getResource('testImage.png'))
 icon8 = icon(src: this.getClass().getResource('testImage.png').toExternalForm())
 

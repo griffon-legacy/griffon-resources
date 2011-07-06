@@ -41,6 +41,7 @@ class ResourcesGriffonAddon {
         app.metaClass.rm = resourceManager
         resourceManager.basenames = basenames as ObservableList
         resourceManager.customSuffixes = (app.config?.resources?.customSuffixes ?: []) as ObservableList
+        resourceManager.resourceSuffix = app.config?.resources?.resourceSuffix ?: 'Resources'
         resourceManager.locale = app.config?.resources?.locale ?: Locale.default
         resourceManager.loader = app.config?.resources?.loader ?: ResourceManager.classLoader
         resourceManager.extension = app.config?.resources?.extension ?: 'groovy'
