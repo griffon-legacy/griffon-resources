@@ -4,3 +4,4 @@ target
 *.iml
 griffon-resources-*.zip
 plugin.xml
+.svn
