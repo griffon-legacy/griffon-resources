@@ -1,55 +1,3 @@
-/*
- * Copyright 2010 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * @author Alexander Klein
- */
-class ResourcesGriffonPlugin {
-    // the plugin version
-    def version = "0.3"
-    // the version or versions of Griffon the plugin is designed for
-    def griffonVersion = '0.9.5-SNAPSHOT > *'
-    // the other plugins this plugin depends on
-    def dependsOn = ['i18n-support': '0.1-SNAPSHOT']
-    // resources that are included in plugin packaging
-    List pluginIncludes = []
-    // the plugin license
-    String license = 'Apache Software License 2.0'
-    // Toolkit compatibility. No value means compatible with all
-    // Valid values are: swing, javafx, swt, pivot, gtk
-    List toolkits = []
-    // Platform compatibility. No value means compatible with all
-    // Valid values are:
-    // linux, linux64, windows, windows64, macosx, macosx64, solaris
-    List platforms = []
-
-    // URL where documentation can be found
-    String documentation = 'http://griffon.codehaus.org/Resources+Plugin'
-    // URL where source can be found
-    String source = 'https://github.com/karfunkel/griffon-resources'
-
-    List authors = [
-            [
-                    name: 'Alexander Klein',
-                    email: 'info@aklein.org'
-            ]
-    ]
-    def title = 'i18n and resource manager'
-    // accepts Markdown syntax. See http://daringfireball.net/projects/markdown/ for details
-    def description = '''
 **resources** provides internationalization support in a groovy way.<br/>
 
 This plugin provides an implementation of `i18n-support`, but goes beyond that, providing i18n for resources like images and so on aswell. <br/>
@@ -87,10 +35,7 @@ You can define customized Resource-files, for e.g. to specify plattform- or appl
 one custom-name, but the resolving mechanism can use multiple custom-names.
 
 ### Resource-file naming
-The naming of resource-files fo// URL where documentation can be found
-    String documentation = 'http://griffon.codehaus.org/I18n+Support+Plugin'
-    // URL where source can be found
-    String source = 'https://github.com/griffon/griffon-i18n-support-plugin'llows the basic rules of ResourceBundle: <br/>
+The naming of resource-files follows the basic rules of ResourceBundle: <br/>
 `<bundlename>_<customname>_<language>_<country>_<variant>.<extension>` while all but bundlename and extension is optional, along with it's underscores.<br/>
 e.g.: messages_custom_de.properties
 
@@ -296,5 +241,7 @@ Configuration
     resources.loader = app.getClass().classLoader // The ClassLoader to load the resource-files from
     resources.extension = 'groovy'                // Extension for ConfigSlurper-based resource-files
 
-'''
-}
+History
+-------
+- 0.3 <br/>
+  switched to i18n-support dependency

@@ -5,3 +5,6 @@ test {
     key4 = 'resourcemanager/resources/ResourceManagerTests_de.groovy'
     key5 = 'resourcemanager/resources/ResourceManagerTests_de.groovy'
 }
+
+i18n.string.one= 'Testwert'
+i18n.string.two = 'Testwert-#_0'

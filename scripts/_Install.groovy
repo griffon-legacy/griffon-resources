@@ -29,8 +29,20 @@ builderConfig.each() { prefix, v ->
 if (!addonIsSet1) {
     println 'Adding ResourcesGriffonAddon to Builder.groovy'
     builderConfigFile.append('''
-root.'ResourcesGriffonAddon'.addon=true
 root.'ResourcesGriffonAddon'.controller='*'
 root.'ResourcesGriffonAddon'.model='*'
 ''')
 }
+
+File configFile = new File(basedir, 'griffon-app/conf/Config.groovy')
+ConfigObject config = configSlurper.parse(configFile.text)
+
+if (!config.i18n.provider) configFile.append '''\ni18n.provider = 'resources' \n'''
+if (!config.i18n.basenames && config.i18n.basenames != []) configFile.append '''i18n.basenames = ['messages'] \n'''
+if (!config.resources.customSuffixes && config.resources.customSuffixes != []) configFile.append '''resources.customSuffixes = [] \n'''
+if (!config.resources.resourceSuffix) configFile.append '''resources.resourceSuffix = 'Resources' \n'''
+if (!config.resources.locale) configFile.append '''resources.locale = Locale.default \n'''
+if (!config.resources.extension) configFile.append '''resources.extension = 'groovy' \n'''
+
+
+

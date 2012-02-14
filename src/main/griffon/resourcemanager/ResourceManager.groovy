@@ -17,6 +17,8 @@ package griffon.resourcemanager
 
 import griffon.core.GriffonApplication
 import groovy.beans.Bindable
+import java.awt.Component
+import java.awt.Container
 import java.beans.PropertyChangeListener
 import java.beans.PropertyEditor
 import java.security.AccessController
@@ -24,13 +26,12 @@ import java.security.PrivilegedActionException
 import java.security.PrivilegedExceptionAction
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanWrapperImpl
-import java.awt.Component
-import java.awt.Container
+import griffon.plugins.i18n.*
 
 /**
  * @author Alexander Klein
  */
-class ResourceManager implements Cloneable {
+class ResourceManager implements Cloneable, ExtendedMessageSource, ConstrainedMessageSource {
     static final Map<Class, Class> WRAPPERS = [:]
     private static final BeanWrapperImpl registry = new BeanWrapperImpl(true)
 
@@ -101,11 +102,13 @@ class ResourceManager implements Cloneable {
             return args
         }
         int idx = 0
-        if (args instanceof Object[]) {
+        if (args instanceof Object[])
+            args = args.toList()
+        if (args instanceof Collection) {
             args.each { arg ->
                 if (arg instanceof Map) {
                     data.putAll(arg)
-                } else if (arg instanceof Collection) {
+                } else if (arg instanceof Collection || arg instanceof Object[]) {
                     arg.each { a ->
                         data.put("_$idx".toString(), a)
                         idx++
@@ -115,7 +118,7 @@ class ResourceManager implements Cloneable {
                     idx++
                 }
             }
-        } else {
+        } else if (args != null) {
             data.put('_0', args)
         }
         return data
@@ -167,6 +170,112 @@ class ResourceManager implements Cloneable {
             return defaultValue
         else
             return value
+    }
+
+    protected String expandMessage(String key, Collection args, Object defaultMessage, Locale locale = null) throws NoSuchMessageException {
+        expandMessage(key, createMapFromArguments(args), defaultMessage, locale)
+    }
+
+    protected String expandMessage(String key, Object[] args, Object defaultMessage, Locale locale = null) throws NoSuchMessageException {
+        expandMessage(key, createMapFromArguments(args), defaultMessage, locale)
+    }
+
+    protected String expandMessage(String key, Map args, Object defaultMessage, Locale locale = null) throws NoSuchMessageException {
+        def parts = key.split(/\./).iterator()
+        ResourceManager rm = locale ? getAt(locale) : this
+        def msg = rm.invokeMethod(parts.next(), args)
+        while (!(msg instanceof String)) {
+            if (msg == null) {
+                if (defaultMessage == null)
+                    throw new NoSuchMessageException(key, locale)
+                msg = defaultMessage
+            } else if (msg instanceof ConfigObject) {
+                if (msg.size() == 0) {
+                    if (defaultMessage == null)
+                        throw new NoSuchMessageException(key, locale)
+                    msg = defaultMessage
+                } else if (parts.hasNext())
+                    msg = getObject(parts.next(), msg, args)
+                else {
+                    if (defaultMessage == null)
+                        throw new NoSuchMessageException(key, locale)
+                    msg = defaultMessage
+                }
+            } else if (msg instanceof Closure) {
+                switch (msg.maximumNumberOfParameters) {
+                    case 0: msg = msg.call(); break
+                    case 1: msg = msg.call(args); break
+                    case 2: msg = msg.call(args, defaultMessage); break
+                    case 3: msg = msg.call(args, defaultMessage, locale)
+                }
+            } else
+                msg = msg.toString()
+        }
+        return msg
+    }
+
+    String getMessage(String key) throws NoSuchMessageException {
+        expandMessage(key, (Map) null, null)
+    }
+
+    String getMessage(String key, String defaultMessage) {
+        expandMessage(key, (Map) null, defaultMessage)
+    }
+
+    String getMessage(String key, Locale locale) throws NoSuchMessageException {
+        expandMessage(key, (Map) null, locale)
+    }
+
+    String getMessage(String key, String defaultMessage, Locale locale) {
+        expandMessage(key, (Map) null, defaultMessage, locale)
+    }
+
+    String getMessage(String key, List<?> args) throws NoSuchMessageException {
+        expandMessage(key, args, null)
+    }
+
+    String getMessage(String key, List<?> args, String defaultMessage) {
+        expandMessage(key, args, defaultMessage)
+    }
+
+    String getMessage(String key, List<?> args, Locale locale) throws NoSuchMessageException {
+        expandMessage(key, args, locale)
+    }
+
+    String getMessage(String key, List<?> args, String defaultMessage, Locale locale) {
+        expandMessage(key, args, defaultMessage, locale)
+    }
+
+    String getMessage(String key, Object[] args) throws NoSuchMessageException {
+        expandMessage(key, args, null)
+    }
+
+    String getMessage(String key, Object[] args, String defaultMessage) {
+        expandMessage(key, args, defaultMessage)
+    }
+
+    String getMessage(String key, Object[] args, String defaultMessage, Locale locale) {
+        expandMessage(key, args, defaultMessage, locale)
+    }
+
+    String getMessage(String key, Object[] args, Locale locale) throws NoSuchMessageException {
+        expandMessage(key, args, locale)
+    }
+
+    String getMessage(String key, Map args) throws NoSuchMessageException {
+        expandMessage(key, args, null)
+    }
+
+    String getMessage(String key, Map args, String defaultMessage) {
+        expandMessage(key, args, defaultMessage)
+    }
+
+    String getMessage(String key, Map args, String defaultMessage, Locale locale) {
+        expandMessage(key, args, defaultMessage, locale)
+    }
+
+    String getMessage(String key, Map args, Locale locale) throws NoSuchMessageException {
+        expandMessage(key, args, locale)
     }
 
     @Override
@@ -221,18 +330,29 @@ class ResourceManager implements Cloneable {
                     escaped = false
                     checkDigit = false
                     break
+                case '{':
+                    if (escaped)
+                        result << '\\'
+                    result << c
+                    escaped = false
+                    checkDigit = false
+                    break
                 default:
                     result << c
                     escaped = false
                     checkDigit = false
             }
         }
+        template = result.toString()
+        template = (template =~ /([^\$\\])\{(\d+)\}/).replaceAll(/$1\$\{_$2\}/)
+        template = (template =~ /^\{(\d+)\}/).replaceFirst(/\$\{_$1\}/)
+        template = (template =~ /\\\{(\d+)\}/).replaceFirst(/\{$1\}/)
         def shell
         if (baseclass)
             shell = new GroovyShell(baseclass.classLoader, new Binding(data))
         else
             shell = new GroovyShell(new Binding(data))
-        return shell.evaluate("\"$result\"")
+        return shell.evaluate("\"$template\"")
     }
 
     ConfigObject getConfig() {
@@ -459,5 +579,11 @@ class ResourceManager implements Cloneable {
 
     static void registerEditor(Class cls, PropertyEditor editor) {
         registry.registerSharedEditor(cls, editor)
+    }
+
+    MessageSource getMessageSource(Object baseclass) throws ConstraintNotSupportedException {
+        if (!(baseclass instanceof Class))
+            throw new ConstraintNotSupportedException(this, baseclass);
+        return (MessageSource) getAt((Class) baseclass)
     }
 }

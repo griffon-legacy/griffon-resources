@@ -98,6 +98,8 @@ class ResourceManagerTests extends GriffonUnitTestCase {
         assert rm.test.fill2(a: 1, b: 2) == '[ 1, 2, #a ]'
         assert rm.test.fill2([a: 1, b: 2]) == '[ 1, 2, #a ]'
         assert rm.test.fill3(1) == '[ 1 ]'
+        assert rm.test.fill4(1) == '1[ 1 {a} ]1'
+        assert rm.test.fill5(1) == '{0}'
 
         assert rm.test.dynamic(1, 2) == '1 2'
         assert rm.test.dynamic(* [1, 2]) == '1 2'
@@ -387,5 +389,24 @@ class ResourceManagerTests extends GriffonUnitTestCase {
         assert map.property1 == 'Value1'
         assert map.property2 == '2' // No conversion b/c no target type
         assert map.property3.sub1 == 'Value3'
+    }
+
+    void testGetMessage() {
+        ResourceManager rm = new ResourceManager(basenames: ['messages'], customSuffixes: ['_custom'])
+        def url = new File('test/resourceBase').toURL()
+        rm.loader = new URLClassLoader([url] as URL[], resourcemanager.ResourceManagerTests.getClassLoader())
+        rm = rm[this][Locale.ENGLISH]
+        
+        assert rm.getMessage('i18n.string.one') == 'Testvalue'
+        assert rm.getMessage('i18n.strin.one', 'Blah') == 'Blah'
+        assert rm.getMessage('i18n.string.one', 'Blah') == 'Testvalue'
+        assert rm.getMessage('i18n.string.one', '', Locale.GERMAN) == 'Testwert'
+        assert rm.getMessage('i18n.string.two', ['Blubb'], '', Locale.GERMAN) == 'Testwert-Blubb'
+        assert rm.getMessage('i18n.string.two', ['Blubb'], '') == 'Testvalue-Blubb'
+
+        assert rm.getMessage('i18n.closure.one', ['Blah', 'Blubb'], 'x', Locale.GERMAN) == 'Testvalue'
+        assert rm.getMessage('i18n.closure.two', ['Blah', 'Blubb'], 'x', Locale.GERMAN) == 'Testvalue 2'
+        assert rm.getMessage('i18n.closure.three', ['Blah', 'Blubb'], 'x', Locale.GERMAN) == 'Testvalue 2 x'
+        assert rm.getMessage('i18n.closure.four', ['Blah', 'Blubb'], 'x', Locale.GERMAN) == 'Testvalue 2 x de'
     }
 }

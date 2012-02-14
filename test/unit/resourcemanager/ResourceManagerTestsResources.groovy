@@ -27,6 +27,8 @@ objects."int" = 123
 test.fill1 = '[ #0, #1 ]'
 test.fill2 = '[ #{a}, #b, \\#a ]'
 test.fill3 = "[ #0 ]"
+test.fill4 = "{0}[ {0} {a} ]{0}"
+test.fill5 = "\\{0}"
 
 test.dynamic = {a, b -> return "$a $b"}
 
@@ -147,3 +149,11 @@ injections {
     property3.sub1 = 'Value3'
     url1 = 'http://www.google.de'
 }
+
+i18n.string.one = 'Testvalue'
+i18n.string.two = "Testvalue-#_0"
+i18n.number = 1
+i18n.closure.one = { -> 'Testvalue' }
+i18n.closure.two = { args -> "Testvalue ${args.size()}" }
+i18n.closure.three = { args, defValue -> "Testvalue ${args.size()} $defValue" }
+i18n.closure.four = { args, defValue, locale -> "Testvalue ${args.size()} $defValue $locale" }

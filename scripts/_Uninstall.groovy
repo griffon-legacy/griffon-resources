@@ -32,3 +32,6 @@ if (addonIsSet1) {
     builderConfigFile.text = builderConfigFile.text - "root.'ResourcesGriffonAddon'.controller='*'\n"
     builderConfigFile.text = builderConfigFile.text - "root.'ResourcesGriffonAddon'.model='*'\n"
 }
+
+File configFile = new File(basedir, 'griffon-app/conf/Config.groovy')
+configFile.text = configFile.text - "i18n.provider = 'resources'"
