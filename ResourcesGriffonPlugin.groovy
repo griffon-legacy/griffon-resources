@@ -23,7 +23,7 @@ class ResourcesGriffonPlugin {
     // the version or versions of Griffon the plugin is designed for
     def griffonVersion = '0.9.5-SNAPSHOT > *'
     // the other plugins this plugin depends on
-    def dependsOn = ['i18n-support': '0.1-SNAPSHOT']
+    def dependsOn = ['i18n-support': '0.1']
     // resources that are included in plugin packaging
     List pluginIncludes = []
     // the plugin license
