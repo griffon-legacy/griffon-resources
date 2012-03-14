@@ -21,7 +21,7 @@ class ResourcesGriffonPlugin {
     // the plugin version
     def version = "0.3"
     // the version or versions of Griffon the plugin is designed for
-    def griffonVersion = '0.9.5-SNAPSHOT > *'
+    def griffonVersion = '0.9.5-rc2 > *'
     // the other plugins this plugin depends on
     def dependsOn = ['i18n-support': '0.1']
     // resources that are included in plugin packaging
@@ -68,6 +68,19 @@ You can get hold of the MessageSource instance with `messageSource`, `i18n`, `re
 If `i18n.provider = 'resources'` all 4 properties point to the same instance. If e.g. `i18n.provider = 'i18n-support'` `messageSource` and `i18n` point to
 i18n-support's implementation but `resourceManager` and `rm` always point to this plugin's implementation (ResourceManager). <br/>
 
+*Example with `i18n.provider = 'resources'`*
+
+messages.properties:
+
+    key.static = This is just a text
+
+Your Code:
+
+    assert 'This is just a text' == rm.key.static
+    assert 'This is just a text' == resourceManager.key.static
+    assert 'This is just a text' == i18n.key.static
+    assert 'This is just a text' == messageSource.key.static
+
 ### Resource formats
 ResourceManager supports two formats for defining messages/resources (resource-files): Properties- and ConfigSlurper-files.<br/>
 Properties-files have to end with .properties while the extension of a ConfigSlurper-file can be defined by the configuration key `resources.extension`.
@@ -82,9 +95,48 @@ If getMessage is called and the resolved result is a Closure, it will be called 
 
 Only if the resolved value or the result of a Closure is of type String, the argument-replacement of `getMessage` takes place.
 
+*Example*
+
+messages.properties:
+
+    key.static = This is just a text
+
+messages.groovy:
+
+    key {
+        static = 'This is just a text'
+        object = Locale.GERMAN
+        closure = { args, defaultMessage, locale ->
+            if(!args.value)
+                return defaultMessage
+            return NumberFormat.getInstance(locale).format(args.value)
+        }
+        closure2 = { 'The key #key has the value #value'.toLowerCase() }
+    }
+
+Your Code:
+
+    assert 'This is just a text' == rm.key.static
+    assert Locale.GERMAN == rm.key.object
+    assert rm.key.closure instanceof Closure
+    assert '---' == rm.getMessage('key.closure', [], '---', Locale.GERMAN)
+    assert '1.000,123' = rm.getMessage('key.closure', [value: 1000.123], '---', Locale.GERMAN)
+    assert 'the key X has the value 100' == rm.getMessage('key.closure2', [key: 'X', value: 100])
+
 ### Resource customization
 You can define customized Resource-files, for e.g. to specify plattform- or application-logic specific resources. Each resource-file can be related to only
 one custom-name, but the resolving mechanism can use multiple custom-names.
+
+*Examples*
+
+    messages_windows.groovy
+    messages_windows_de_DE.groovy
+    messages_linux.groovy
+    messages_linux_de_DE.groovy
+    messages.groovy
+    messages_de_DE.groovy
+
+    rm.customSuffixes = ['windows', 'linux']
 
 ### Resource-file naming
 The naming of resource-files fo// URL where documentation can be found

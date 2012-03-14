@@ -9,12 +9,25 @@ Usage
 -----
 This implementation does support ExtendedMessageSource, so args may not be a Map. <br/>
 Aswell this implementation does support GString-like replacements. <br/>
-For more info's see the documentation of i18n-support.
+For more info's and examples see the documentation of i18n-support.
 
 ### MessageSource (ResourceManger) access
 You can get hold of the MessageSource instance with `messageSource`, `i18n`, `resourceManager` or `rm`  on artifacts and the app-instance.
 If `i18n.provider = 'resources'` all 4 properties point to the same instance. If e.g. `i18n.provider = 'i18n-support'` `messageSource` and `i18n` point to
 i18n-support's implementation but `resourceManager` and `rm` always point to this plugin's implementation (ResourceManager). <br/>
+
+*Example with `i18n.provider = 'resources'`*
+
+messages.properties:
+
+    key.static = This is just a text
+
+Your Code:
+
+    assert 'This is just a text' == rm.key.static
+    assert 'This is just a text' == resourceManager.key.static
+    assert 'This is just a text' == i18n.key.static
+    assert 'This is just a text' == messageSource.key.static
 
 ### Resource formats
 ResourceManager supports two formats for defining messages/resources (resource-files): Properties- and ConfigSlurper-files.<br/>
@@ -30,9 +43,48 @@ If getMessage is called and the resolved result is a Closure, it will be called 
 
 Only if the resolved value or the result of a Closure is of type String, the argument-replacement of `getMessage` takes place.
 
+*Example*
+
+messages.properties:
+
+    key.static = This is just a text
+
+messages.groovy:
+
+    key {
+        static = 'This is just a text'
+        object = Locale.GERMAN
+        closure = { args, defaultMessage, locale ->
+            if(!args.value)
+                return defaultMessage
+            return NumberFormat.getInstance(locale).format(args.value)
+        }
+        closure2 = { 'The key #key has the value #value'.toLowerCase() }
+    }
+
+Your Code:
+
+    assert 'This is just a text' == rm.key.static
+    assert Locale.GERMAN == rm.key.object
+    assert rm.key.closure instanceof Closure
+    assert '---' == rm.getMessage('key.closure', [], '---', Locale.GERMAN)
+    assert '1.000,123' = rm.getMessage('key.closure', [value: 1000.123], '---', Locale.GERMAN)
+    assert 'the key X has the value 100' == rm.getMessage('key.closure2', [key: 'X', value: 100])
+
 ### Resource customization
 You can define customized Resource-files, for e.g. to specify plattform- or application-logic specific resources. Each resource-file can be related to only
 one custom-name, but the resolving mechanism can use multiple custom-names.
+
+*Examples*
+
+    messages_windows.groovy
+    messages_windows_de_DE.groovy
+    messages_linux.groovy
+    messages_linux_de_DE.groovy
+    messages.groovy
+    messages_de_DE.groovy
+
+    rm.customSuffixes = ['windows', 'linux']
 
 ### Resource-file naming
 The naming of resource-files follows the basic rules of ResourceBundle: <br/>
@@ -73,7 +125,7 @@ Additional to the `i18n-support`'s `getMessage` function ResourceManager can be 
 
 - `rm.getResource(String key, String defaultMessage = null, def args = null,)` where args can be of the types `Object[]`, `Collection<?>` and `Map<String, ?>` <br/>
   Similar to `getMessage` but delivers the pure Object. Only a String's argument-replacement takes place. Another difference is, that `getResource` only
-  does not descend into child hirarchie.
+  does not descend into child hierarchie.
 - The more groovy way to access is via getProperty and invokeMethod: <br/>
   `rm.test.key` is the same as `getMessage('test.key')` without calling a Closure result<br/>
   `rm.test.key ?: 'abc'` is the same as `getMessage('test.key', 'abc')` without calling a Closure result<br/>
@@ -149,7 +201,7 @@ Additionally the ResourceBuild provided by this plugin helps defining often loca
 - **icon** <br/>
     - `icon('testImage.png')`
     - `icon(url('testImage.png'))`
-    - `icon(uri('testImage.png'))`             f possible i
+    - `icon(uri('testImage.png'))`
     - `icon(MyClass.getResource('testImage.png').newInputStream())`
     - `icon(MyClass.getResource('testImage.png').getBytes())`
     - `icon(new File('test/unit/resourcemanager/testImage.png'))`
@@ -243,5 +295,6 @@ Configuration
 
 History
 -------
-- 0.3 <br/>
-  switched to i18n-support dependency
+| Version | Notes                               |
+|---------|-------------------------------------|
+| 0.3     | switched to i18n-support dependency |
