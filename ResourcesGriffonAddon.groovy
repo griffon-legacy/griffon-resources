@@ -101,7 +101,7 @@ class ResourcesGriffonAddon {
                         def rm = resourceManager[cls]
                         metaClass.rm = rm
                         metaClass.resourceManager = rm
-                        if(MessageSourceHolder.provider == PROVIDER_NAME) {
+                        if(MessageSourceHolder.instance.provider == PROVIDER_NAME) {
                             metaClass.getMessageSource = { -> rm }
                             metaClass.getI18n = { -> rm }
                             metaClass.getMessage = { Object... args -> rm.getMessage(* args) }
@@ -156,7 +156,7 @@ class ResourcesGriffonAddon {
             app.metaClass.resourceManager = resourceManager
             app.metaClass.rm = resourceManager
             // i18n-facade
-            MessageSourceHolder.registerMessageSource(PROVIDER_NAME, resourceManager)
+            MessageSourceHolder.instance.registerMessageSource(PROVIDER_NAME, resourceManager)
         }
     }
 }

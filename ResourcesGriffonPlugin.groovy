@@ -19,11 +19,11 @@
  */
 class ResourcesGriffonPlugin {
     // the plugin version
-    def version = "0.3"
+    String version = "0.4"
     // the version or versions of Griffon the plugin is designed for
-    def griffonVersion = '0.9.5-rc2 > *'
+    String griffonVersion = '0.9.5 > *'
     // the other plugins this plugin depends on
-    def dependsOn = ['i18n-support': '0.1']
+    Map dependsOn = ['i18n-support': '0.2']
     // resources that are included in plugin packaging
     List pluginIncludes = []
     // the plugin license
@@ -37,7 +37,7 @@ class ResourcesGriffonPlugin {
     List platforms = []
 
     // URL where documentation can be found
-    String documentation = 'http://griffon.codehaus.org/Resources+Plugin'
+    String documentation = ''
     // URL where source can be found
     String source = 'https://github.com/karfunkel/griffon-resources'
 
@@ -47,9 +47,9 @@ class ResourcesGriffonPlugin {
                     email: 'info@aklein.org'
             ]
     ]
-    def title = 'i18n and resource manager'
+    String title = 'i18n and resource manager'
     // accepts Markdown syntax. See http://daringfireball.net/projects/markdown/ for details
-    def description = '''
+    String description = '''
 **resources** provides internationalization support in a groovy way.<br/>
 
 This plugin provides an implementation of `i18n-support`, but goes beyond that, providing i18n for resources like images and so on aswell. <br/>
